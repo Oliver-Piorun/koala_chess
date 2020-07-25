@@ -74,7 +74,7 @@ fn main() {
         );
     }
 
-    if window_handle == std::ptr::null_mut() {
+    if window_handle.is_null() {
         eprintln!("Could not create window!");
         return;
     }
@@ -120,7 +120,7 @@ unsafe extern "system" fn window_proc(
             let width = paint.rcPaint.right - paint.rcPaint.left;
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
             PatBlt(device_context, x, y, width, height, BLACKNESS);
-            EndPaint(hwnd, &mut paint);
+            EndPaint(hwnd, &paint);
         }
         _ => (),
     };
