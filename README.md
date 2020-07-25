@@ -1,6 +1,9 @@
 # Koala chess
 A 2D chess game written in Rust.
 
+## Supported platforms
+- Windows (OpenGL)
+
 ## Technical goals
 - Use as few dependencies as possible
 - Keep an eye on performance
