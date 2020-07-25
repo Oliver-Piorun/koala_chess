@@ -13,6 +13,7 @@ A 2D chess game written in Rust.
 
 ## Development plan
 - ✅ Create an initial project
-- ⬜️ Create a window
+- ✅ Create a window
+- ⬜️ Create a window loop
 - ⬜️ Generate OpenGL bindings with rust-bindgen
 - ⬜️ Implement a game loop
