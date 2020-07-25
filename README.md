@@ -9,7 +9,7 @@ A 2D chess game written in Rust.
 - Learn more about Rust, rendering and game development
 
 ## Development plan
-- [x] Create an initial project
-- [] Create a window
-- [] Generate OpenGL bindings with rust-bindgen
-- [] Implement a game loop
+- ✅ Create an initial project
+- ⬜️ Create a window
+- ⬜️ Generate OpenGL bindings with rust-bindgen
+- ⬜️ Implement a game loop
