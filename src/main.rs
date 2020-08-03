@@ -1,17 +1,21 @@
 use std::{ffi::OsStr, os::windows::ffi::OsStrExt};
 use winapi::{
     shared::{
-        minwindef::{ATOM, BOOL, LPARAM, LRESULT, UINT, WPARAM},
+        minwindef::{ATOM, BOOL, LPARAM, LRESULT, UINT, WORD, WPARAM},
         windef::{HWND, RECT},
     },
     um::{
         libloaderapi::GetModuleHandleW,
-        wingdi::{PatBlt, BLACKNESS},
+        wingdi::{
+            wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat, PatBlt,
+            SetPixelFormat, BLACKNESS, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL,
+            PIXELFORMATDESCRIPTOR,
+        },
         winuser::{
             BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
-            GetMessageW, PostQuitMessage, RegisterClassW, TranslateMessage, CS_HREDRAW, CS_OWNDC,
-            CS_VREDRAW, CW_USEDEFAULT, MSG, PAINTSTRUCT, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY,
-            WM_PAINT, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+            GetDC, GetMessageW, PostQuitMessage, RegisterClassW, ReleaseDC, TranslateMessage,
+            CS_HREDRAW, CS_OWNDC, CS_VREDRAW, CW_USEDEFAULT, MSG, PAINTSTRUCT, WM_ACTIVATEAPP,
+            WM_CLOSE, WM_DESTROY, WM_PAINT, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
         },
     },
 };
@@ -55,10 +59,10 @@ fn main() {
     window_name.push(0);
 
     // Create window
-    let window_handle: HWND;
+    let window: HWND;
 
     unsafe {
-        window_handle = CreateWindowExW(
+        window = CreateWindowExW(
             0,
             window_class.lpszClassName,
             window_name.as_ptr(),
@@ -74,10 +78,13 @@ fn main() {
         );
     }
 
-    if window_handle.is_null() {
+    if window.is_null() {
         eprintln!("Could not create window!");
         return;
     }
+
+    // Initialize OpenGL
+    initialize_open_gl(window);
 
     // Window loop
     loop {
@@ -105,16 +112,16 @@ fn main() {
 }
 
 unsafe extern "system" fn window_proc(
-    hwnd: HWND,
-    u_msg: UINT,
+    window: HWND,
+    message: UINT,
     w_param: WPARAM,
     l_param: LPARAM,
 ) -> LRESULT {
-    match u_msg {
+    match message {
         WM_SIZE => {
             println!("WM_SIZE");
             let mut rect = RECT::default();
-            GetClientRect(hwnd, &mut rect);
+            GetClientRect(window, &mut rect);
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
             println!("width: {} / height: {}", width, height);
@@ -130,16 +137,55 @@ unsafe extern "system" fn window_proc(
         WM_ACTIVATEAPP => println!("WM_ACTIVATEAPP"),
         WM_PAINT => {
             let mut paint = PAINTSTRUCT::default();
-            let device_context = BeginPaint(hwnd, &mut paint);
+            let device_context = BeginPaint(window, &mut paint);
             let x = paint.rcPaint.left;
             let y = paint.rcPaint.top;
             let width = paint.rcPaint.right - paint.rcPaint.left;
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
             PatBlt(device_context, x, y, width, height, BLACKNESS);
-            EndPaint(hwnd, &paint);
+            EndPaint(window, &paint);
         }
         _ => (),
     };
 
-    DefWindowProcW(hwnd, u_msg, w_param, l_param)
+    DefWindowProcW(window, message, w_param, l_param)
+}
+
+fn initialize_open_gl(window: HWND) {
+    unsafe {
+        let device_context = GetDC(window);
+
+        let mut desired_pixel_format = PIXELFORMATDESCRIPTOR::default();
+        desired_pixel_format.nSize = std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as WORD;
+        desired_pixel_format.nVersion = 1;
+        desired_pixel_format.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+
+        // RGB
+        desired_pixel_format.cColorBits = 32;
+
+        // Alpha
+        desired_pixel_format.cAlphaBits = 8;
+
+        let suggested_pixel_format_index = ChoosePixelFormat(device_context, &desired_pixel_format);
+        let mut suggested_pixel_format = PIXELFORMATDESCRIPTOR::default();
+        DescribePixelFormat(
+            device_context,
+            suggested_pixel_format_index,
+            std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as UINT,
+            &mut suggested_pixel_format,
+        );
+        SetPixelFormat(
+            device_context,
+            suggested_pixel_format_index,
+            &suggested_pixel_format,
+        );
+
+        let rendering_context = wglCreateContext(device_context);
+
+        if wglMakeCurrent(device_context, rendering_context) == 0 {
+            eprintln!("wglMakeCurrent failed!");
+        }
+
+        ReleaseDC(window, device_context);
+    }
 }
