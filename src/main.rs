@@ -9,7 +9,7 @@ use winapi::{
         wingdi::{
             wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat, PatBlt,
             SetPixelFormat, BLACKNESS, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL,
-            PIXELFORMATDESCRIPTOR,
+            PIXELFORMATDESCRIPTOR, PFD_TYPE_RGBA,
         },
         winuser::{
             BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
@@ -158,6 +158,7 @@ fn initialize_open_gl(window: HWND) {
         let mut desired_pixel_format = PIXELFORMATDESCRIPTOR::default();
         desired_pixel_format.nSize = std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as WORD;
         desired_pixel_format.nVersion = 1;
+        desired_pixel_format.iPixelType = PFD_TYPE_RGBA;
         desired_pixel_format.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
 
         // RGB
