@@ -2,16 +2,16 @@ use std::{ffi::OsStr, os::windows::ffi::OsStrExt};
 use winapi::{
     shared::{
         minwindef::{ATOM, BOOL, LPARAM, LRESULT, UINT, WPARAM},
-        windef::HWND,
+        windef::{HWND, RECT},
     },
     um::{
         libloaderapi::GetModuleHandleW,
         wingdi::{PatBlt, BLACKNESS},
         winuser::{
-            BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetMessageW,
-            RegisterClassW, TranslateMessage, CS_HREDRAW, CS_OWNDC, CS_VREDRAW, CW_USEDEFAULT, MSG,
-            PAINTSTRUCT, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY, WM_PAINT, WM_SIZE, WNDCLASSW,
-            WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+            BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
+            GetMessageW, PostQuitMessage, RegisterClassW, TranslateMessage, CS_HREDRAW, CS_OWNDC,
+            CS_VREDRAW, CW_USEDEFAULT, MSG, PAINTSTRUCT, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY,
+            WM_PAINT, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
         },
     },
 };
@@ -91,10 +91,13 @@ fn main() {
         if message_result == -1 {
             eprintln!("Could not retrieve message!");
             return;
+        } else if message_result == 0 {
+            // WM_CLOSE message
+            return;
         }
 
         unsafe {
-            // INFO: These calls could fail, but we can't really handle them
+            // INFO: These calls could fail, but we can't really handle those fails
             TranslateMessage(&message);
             DispatchMessageW(&message);
         }
@@ -108,9 +111,22 @@ unsafe extern "system" fn window_proc(
     l_param: LPARAM,
 ) -> LRESULT {
     match u_msg {
-        WM_SIZE => println!("WM_SIZE"),
-        WM_DESTROY => println!("WM_DESTROY"),
-        WM_CLOSE => println!("WM_CLOSE"),
+        WM_SIZE => {
+            println!("WM_SIZE");
+            let mut rect = RECT::default();
+            GetClientRect(hwnd, &mut rect);
+            let width = rect.right - rect.left;
+            let height = rect.bottom - rect.top;
+            println!("width: {} / height: {}", width, height);
+        }
+        WM_DESTROY => {
+            println!("WM_DESTROY");
+            PostQuitMessage(0);
+        }
+        WM_CLOSE => {
+            println!("WM_CLOSE");
+            PostQuitMessage(0);
+        }
         WM_ACTIVATEAPP => println!("WM_ACTIVATEAPP"),
         WM_PAINT => {
             let mut paint = PAINTSTRUCT::default();
