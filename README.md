@@ -11,4 +11,4 @@ A 2D chess game written in Rust.
 ## Personal goals
 - Learn more about Rust, rendering and game development
 
-## [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects)
+## [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
