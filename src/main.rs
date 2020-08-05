@@ -1,16 +1,20 @@
 mod gl;
 
-use std::{ffi::OsStr, os::windows::ffi::OsStrExt};
+use std::{
+    ffi::{CString, OsStr},
+    io,
+    os::windows::ffi::OsStrExt,
+};
 use winapi::{
     shared::{
-        minwindef::{ATOM, BOOL, LPARAM, LRESULT, UINT, WORD, WPARAM},
+        minwindef::{ATOM, BOOL, HMODULE, LPARAM, LRESULT, UINT, WORD, WPARAM},
         windef::{HWND, RECT},
     },
     um::{
-        libloaderapi::GetModuleHandleW,
+        libloaderapi::{GetModuleHandleW, GetProcAddress, LoadLibraryW},
         wingdi::{
-            wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat, PatBlt,
-            SetPixelFormat, BLACKNESS, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL,
+            wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat,
+            SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL,
             PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
         },
         winuser::{
@@ -140,17 +144,51 @@ unsafe extern "system" fn window_proc(
         WM_PAINT => {
             let mut paint = PAINTSTRUCT::default();
             let device_context = BeginPaint(window, &mut paint);
-            let x = paint.rcPaint.left;
-            let y = paint.rcPaint.top;
             let width = paint.rcPaint.right - paint.rcPaint.left;
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
-            PatBlt(device_context, x, y, width, height, BLACKNESS);
+
+            let module_name = OsStr::new("opengl32.dll")
+                .encode_wide()
+                .collect::<Vec<u16>>();
+            let module = LoadLibraryW(module_name.as_ptr() as *const u16);
+
+            if !module.is_null() {
+                let _ = gl::gl::Viewport::load_with(|function_name| {
+                    get_open_gl_address(module, function_name)
+                });
+                let _ = gl::gl::ClearColor::load_with(|function_name| {
+                    get_open_gl_address(module, function_name)
+                });
+                let _ = gl::gl::Clear::load_with(|function_name| {
+                    get_open_gl_address(module, function_name)
+                });
+
+                gl::gl::Viewport(0, 0, width, height);
+                gl::gl::ClearColor(1.0, 0.0, 1.0, 0.0);
+                gl::gl::Clear(gl::gl::COLOR_BUFFER_BIT);
+                SwapBuffers(device_context);
+            } else {
+                println!("Module is null! {}", io::Error::last_os_error());
+            }
+
             EndPaint(window, &paint);
         }
         _ => (),
     };
 
     DefWindowProcW(window, message, w_param, l_param)
+}
+
+fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
+    let null_terminated_function_name = CString::new(function_name).unwrap();
+    let address =
+        unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr() as *const i8) };
+
+    if address.is_null() {
+        eprintln!("OpenGL address is null!");
+    }
+
+    address as *const std::ffi::c_void
 }
 
 fn initialize_open_gl(window: HWND) {
