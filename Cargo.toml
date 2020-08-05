@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "windef", "minwindef", "wingdi", "impl-default"] }
+gl_generator = "0.14.0"
