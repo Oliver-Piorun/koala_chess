@@ -1,3 +1,5 @@
+mod gl;
+
 use std::{ffi::OsStr, os::windows::ffi::OsStrExt};
 use winapi::{
     shared::{
@@ -9,7 +11,7 @@ use winapi::{
         wingdi::{
             wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat, PatBlt,
             SetPixelFormat, BLACKNESS, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL,
-            PIXELFORMATDESCRIPTOR, PFD_TYPE_RGBA,
+            PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
         },
         winuser::{
             BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
