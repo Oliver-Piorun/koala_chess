@@ -158,7 +158,7 @@ unsafe extern "system" fn window_proc(
             gl::ClearColor(1.0, 0.0, 1.0, 0.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
             SwapBuffers(device_context);
-let a = 5;
+
             EndPaint(window, &paint);
         }
         _ => (),
