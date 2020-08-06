@@ -223,7 +223,7 @@ fn initialize_open_gl_addresses() {
         .collect::<Vec<u16>>();
 
     // Load module
-    let module = unsafe { LoadLibraryW(module_name.as_ptr() as *const u16) };
+    let module = unsafe { LoadLibraryW(module_name.as_ptr()) };
 
     if module.is_null() {
         // TODO: Error handling
@@ -244,7 +244,7 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
 
     // Get address
     let address =
-        unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr() as *const i8) };
+        unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
 
     if address.is_null() {
         // TODO: Error handling
