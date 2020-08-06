@@ -26,7 +26,7 @@ use winapi::{
 
 fn main() {
     // Create window class name
-    let mut window_class_name = OsStr::new("KoalaChessWindowClass")
+    let mut window_class_name = OsStr::new("KoalaChessWindowClass\0")
         .encode_wide()
         .collect::<Vec<u16>>();
     window_class_name.push(0);
@@ -61,7 +61,7 @@ fn main() {
     }
 
     // Create window name
-    let mut window_name = OsStr::new("Koala chess")
+    let mut window_name = OsStr::new("Koala chess\0")
         .encode_wide()
         .collect::<Vec<u16>>();
     window_name.push(0);
@@ -218,7 +218,7 @@ fn negotiate_pixel_format(device_context: HDC) {
 
 fn initialize_open_gl_addresses() {
     // Create module name
-    let module_name = OsStr::new("opengl32.dll")
+    let module_name = OsStr::new("opengl32.dll\0")
         .encode_wide()
         .collect::<Vec<u16>>();
 
