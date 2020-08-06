@@ -1,5 +1,3 @@
-mod gl;
-
 use std::{
     ffi::{CString, OsStr},
     io,
@@ -156,11 +154,11 @@ unsafe extern "system" fn window_proc(
             let width = paint.rcPaint.right - paint.rcPaint.left;
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
 
-            gl::gl::Viewport(0, 0, width, height);
-            gl::gl::ClearColor(1.0, 0.0, 1.0, 0.0);
-            gl::gl::Clear(gl::gl::COLOR_BUFFER_BIT);
+            gl::Viewport(0, 0, width, height);
+            gl::ClearColor(1.0, 0.0, 1.0, 0.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
             SwapBuffers(device_context);
-
+let a = 5;
             EndPaint(window, &paint);
         }
         _ => (),
@@ -234,10 +232,10 @@ fn initialize_open_gl_addresses() {
     }
 
     // Get and assign addresses
-    let _ = gl::gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ =
-        gl::gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
+        gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
 }
 
 fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
