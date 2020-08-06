@@ -8,7 +8,7 @@ use std::{
 use winapi::{
     shared::{
         minwindef::{ATOM, BOOL, HMODULE, LPARAM, LRESULT, UINT, WORD, WPARAM},
-        windef::{HWND, RECT},
+        windef::{HDC, HWND, RECT},
     },
     um::{
         libloaderapi::{GetModuleHandleW, GetProcAddress, LoadLibraryW},
@@ -54,7 +54,11 @@ fn main() {
     }
 
     if error_code == 0 {
-        eprintln!("Could not register window class!");
+        // TODO: Error handling
+        eprintln!(
+            "Could not register window class! ({})",
+            io::Error::last_os_error()
+        );
         return;
     }
 
@@ -85,7 +89,8 @@ fn main() {
     }
 
     if window.is_null() {
-        eprintln!("Could not create window!");
+        // TODO: Error handling
+        eprintln!("Could not create window! ({})", io::Error::last_os_error());
         return;
     }
 
@@ -102,7 +107,11 @@ fn main() {
         }
 
         if message_result == -1 {
-            eprintln!("Could not retrieve message!");
+            // TODO: Error handling
+            eprintln!(
+                "Could not retrieve message! ({})",
+                io::Error::last_os_error()
+            );
             return;
         } else if message_result == 0 {
             // WM_CLOSE message
@@ -147,29 +156,10 @@ unsafe extern "system" fn window_proc(
             let width = paint.rcPaint.right - paint.rcPaint.left;
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
 
-            let module_name = OsStr::new("opengl32.dll")
-                .encode_wide()
-                .collect::<Vec<u16>>();
-            let module = LoadLibraryW(module_name.as_ptr() as *const u16);
-
-            if !module.is_null() {
-                let _ = gl::gl::Viewport::load_with(|function_name| {
-                    get_open_gl_address(module, function_name)
-                });
-                let _ = gl::gl::ClearColor::load_with(|function_name| {
-                    get_open_gl_address(module, function_name)
-                });
-                let _ = gl::gl::Clear::load_with(|function_name| {
-                    get_open_gl_address(module, function_name)
-                });
-
-                gl::gl::Viewport(0, 0, width, height);
-                gl::gl::ClearColor(1.0, 0.0, 1.0, 0.0);
-                gl::gl::Clear(gl::gl::COLOR_BUFFER_BIT);
-                SwapBuffers(device_context);
-            } else {
-                println!("Module is null! {}", io::Error::last_os_error());
-            }
+            gl::gl::Viewport(0, 0, width, height);
+            gl::gl::ClearColor(1.0, 0.0, 1.0, 0.0);
+            gl::gl::Clear(gl::gl::COLOR_BUFFER_BIT);
+            SwapBuffers(device_context);
 
             EndPaint(window, &paint);
         }
@@ -179,36 +169,41 @@ unsafe extern "system" fn window_proc(
     DefWindowProcW(window, message, w_param, l_param)
 }
 
-fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
-    let null_terminated_function_name = CString::new(function_name).unwrap();
-    let address =
-        unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr() as *const i8) };
+fn initialize_open_gl(window: HWND) {
+    let device_context = unsafe { GetDC(window) };
 
-    if address.is_null() {
-        eprintln!("OpenGL address is null!");
+    negotiate_pixel_format(device_context);
+
+    let rendering_context = unsafe { wglCreateContext(device_context) };
+
+    if unsafe { wglMakeCurrent(device_context, rendering_context) } == 0 {
+        // TODO: Error handling
+        eprintln!("wglMakeCurrent failed!");
     }
 
-    address as *const std::ffi::c_void
+    unsafe { ReleaseDC(window, device_context) };
+
+    initialize_open_gl_addresses();
 }
 
-fn initialize_open_gl(window: HWND) {
+fn negotiate_pixel_format(device_context: HDC) {
+    // Create desired pixel format
+    let mut desired_pixel_format = PIXELFORMATDESCRIPTOR::default();
+    desired_pixel_format.nSize = std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as WORD;
+    desired_pixel_format.nVersion = 1;
+    desired_pixel_format.iPixelType = PFD_TYPE_RGBA;
+    desired_pixel_format.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+
+    // RGBA
+    desired_pixel_format.cColorBits = 32;
+
+    // Alpha
+    desired_pixel_format.cAlphaBits = 8;
+
+    let suggested_pixel_format_index =
+        unsafe { ChoosePixelFormat(device_context, &desired_pixel_format) };
+    let mut suggested_pixel_format = PIXELFORMATDESCRIPTOR::default();
     unsafe {
-        let device_context = GetDC(window);
-
-        let mut desired_pixel_format = PIXELFORMATDESCRIPTOR::default();
-        desired_pixel_format.nSize = std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as WORD;
-        desired_pixel_format.nVersion = 1;
-        desired_pixel_format.iPixelType = PFD_TYPE_RGBA;
-        desired_pixel_format.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
-
-        // RGB
-        desired_pixel_format.cColorBits = 32;
-
-        // Alpha
-        desired_pixel_format.cAlphaBits = 8;
-
-        let suggested_pixel_format_index = ChoosePixelFormat(device_context, &desired_pixel_format);
-        let mut suggested_pixel_format = PIXELFORMATDESCRIPTOR::default();
         DescribePixelFormat(
             device_context,
             suggested_pixel_format_index,
@@ -220,13 +215,43 @@ fn initialize_open_gl(window: HWND) {
             suggested_pixel_format_index,
             &suggested_pixel_format,
         );
+    };
+}
 
-        let rendering_context = wglCreateContext(device_context);
+fn initialize_open_gl_addresses() {
+    // Create module name
+    let module_name = OsStr::new("opengl32.dll")
+        .encode_wide()
+        .collect::<Vec<u16>>();
 
-        if wglMakeCurrent(device_context, rendering_context) == 0 {
-            eprintln!("wglMakeCurrent failed!");
-        }
+    // Load module
+    let module = unsafe { LoadLibraryW(module_name.as_ptr() as *const u16) };
 
-        ReleaseDC(window, device_context);
+    if module.is_null() {
+        // TODO: Error handling
+        eprintln!("OpenGL module is null! ({})", io::Error::last_os_error());
+        return;
     }
+
+    // Get and assign addresses
+    let _ = gl::gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ =
+        gl::gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
+}
+
+fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
+    // Create null-terminated function name
+    let null_terminated_function_name = CString::new(function_name).unwrap();
+
+    // Get address
+    let address =
+        unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr() as *const i8) };
+
+    if address.is_null() {
+        // TODO: Error handling
+        eprintln!("OpenGL address is null! ({})", io::Error::last_os_error());
+    }
+
+    address as *const std::ffi::c_void
 }
