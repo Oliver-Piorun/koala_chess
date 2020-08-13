@@ -12,8 +12,8 @@ use winapi::{
         libloaderapi::{GetModuleHandleW, GetProcAddress, LoadLibraryW},
         wingdi::{
             wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat,
-            SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL,
-            PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
+            SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_MAIN_PLANE,
+            PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
         },
         winuser::{
             BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
@@ -155,8 +155,52 @@ unsafe extern "system" fn window_proc(
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
 
             gl::Viewport(0, 0, width, height);
+
+            // gl::GenTextures(...)
+            // gl::BindTexture(...)
+            // gl::TexImage2D(...)
+
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP as i32);
+
+            gl::TexEnvi(gl::TEXTURE_ENV, gl::TEXTURE_ENV_MODE, gl::MODULATE as i32);
+
+            gl::Enable(gl::TEXTURE_2D);
+
             gl::ClearColor(1.0, 0.0, 1.0, 0.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
+
+            gl::MatrixMode(gl::TEXTURE);
+
+            // Use identify matrix for the texture matrix
+            gl::LoadIdentity();
+
+            gl::MatrixMode(gl::MODELVIEW);
+
+            // Use identity matrix for the model view matrix
+            gl::LoadIdentity();
+
+            gl::MatrixMode(gl::PROJECTION);
+
+            // Use identity matrix for the projection matrix
+            gl::LoadIdentity();
+
+            gl::Begin(gl::TRIANGLES);
+
+            let percentage = 0.9;
+
+            gl::Vertex2f(-percentage, -percentage);
+            gl::Vertex2f(percentage, -percentage);
+            gl::Vertex2f(percentage, percentage);
+
+            gl::Vertex2f(-percentage, -percentage);
+            gl::Vertex2f(percentage, percentage);
+            gl::Vertex2f(-percentage, percentage);
+
+            gl::End();
+
             SwapBuffers(device_context);
 
             EndPaint(window, &paint);
@@ -198,6 +242,8 @@ fn negotiate_pixel_format(device_context: HDC) {
     // Alpha
     desired_pixel_format.cAlphaBits = 8;
 
+    desired_pixel_format.iLayerType = PFD_MAIN_PLANE;
+
     let suggested_pixel_format_index =
         unsafe { ChoosePixelFormat(device_context, &desired_pixel_format) };
     let mut suggested_pixel_format = PIXELFORMATDESCRIPTOR::default();
@@ -233,9 +279,20 @@ fn initialize_open_gl_addresses() {
 
     // Get and assign addresses
     let _ = gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::GenTextures::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::BindTexture::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::TexImage2D::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ =
-        gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
+        gl::TexParameteri::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::TexEnvi::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::Enable::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::MatrixMode::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::LoadIdentity::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::Begin::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::End::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::Vertex2f::load_with(|function_name| get_open_gl_address(module, function_name));
 }
 
 fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
@@ -243,8 +300,7 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
     let null_terminated_function_name = CString::new(function_name).unwrap();
 
     // Get address
-    let address =
-        unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
+    let address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
 
     if address.is_null() {
         // TODO: Error handling
