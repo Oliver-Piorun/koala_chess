@@ -1,3 +1,5 @@
+mod bitmap;
+
 use std::{
     ffi::{CString, OsStr},
     io,
@@ -25,6 +27,8 @@ use winapi::{
 };
 
 fn main() {
+    let _ = bitmap::load_bitmap("textures/chessboard.bmp");
+
     // Create window class name
     let mut window_class_name = OsStr::new("KoalaChessWindowClass\0")
         .encode_wide()
