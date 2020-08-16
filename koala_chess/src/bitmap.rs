@@ -3,6 +3,7 @@ use std::{
     io::{Read, Seek, SeekFrom},
 };
 
+#[derive(Default)]
 pub struct Bitmap {
     pub file_header: FileHeader,
     pub information_header: InformationHeader,
@@ -10,7 +11,7 @@ pub struct Bitmap {
 }
 
 impl Bitmap {
-    fn new(
+    pub fn new(
         file_header: FileHeader,
         information_header: InformationHeader,
         data: Vec<u8>,
@@ -23,6 +24,7 @@ impl Bitmap {
     }
 }
 
+#[derive(Default)]
 pub struct FileHeader {
     pub r#type: u16,
     pub size: u32,
@@ -43,6 +45,7 @@ impl FileHeader {
     }
 }
 
+#[derive(Default)]
 pub struct InformationHeader {
     pub size: u32,
     pub width: i32,

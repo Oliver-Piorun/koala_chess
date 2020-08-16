@@ -1,9 +1,12 @@
 mod bitmap;
 
+use bitmap::Bitmap;
+use lazy_static::lazy_static;
 use std::{
     ffi::{CString, OsStr},
     io,
     os::windows::ffi::OsStrExt,
+    sync::Mutex,
 };
 use winapi::{
     shared::{
@@ -26,8 +29,12 @@ use winapi::{
     },
 };
 
+lazy_static! {
+    static ref CHESSBOARD: Mutex<Bitmap> = Mutex::new(Bitmap::default());
+}
+
 fn main() {
-    let _ = bitmap::load_bitmap("textures/chessboard.bmp");
+    *CHESSBOARD.lock().unwrap() = bitmap::load_bitmap("textures/chessboard.bmp");
 
     // Create window class name
     let mut window_class_name = OsStr::new("KoalaChessWindowClass\0")
@@ -160,50 +167,36 @@ unsafe extern "system" fn window_proc(
 
             gl::Viewport(0, 0, width, height);
 
-            // gl::GenTextures(...)
-            // gl::BindTexture(...)
-            // gl::TexImage2D(...)
+            let mut texture: gl::types::GLuint = 0;
+
+            // Generate texture
+            gl::GenTextures(1, &mut texture);
+
+            // Bind texture
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+
+            // Setup texture
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGBA8 as i32,
+                2048,
+                2048,
+                0,
+                gl::BGRA_EXT,
+                gl::UNSIGNED_BYTE,
+                CHESSBOARD.lock().unwrap().data.as_ptr() as *const std::ffi::c_void,
+            );
 
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP as i32);
-
-            gl::TexEnvi(gl::TEXTURE_ENV, gl::TEXTURE_ENV_MODE, gl::MODULATE as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
 
             gl::Enable(gl::TEXTURE_2D);
 
             gl::ClearColor(1.0, 0.0, 1.0, 0.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
-
-            gl::MatrixMode(gl::TEXTURE);
-
-            // Use identify matrix for the texture matrix
-            gl::LoadIdentity();
-
-            gl::MatrixMode(gl::MODELVIEW);
-
-            // Use identity matrix for the model view matrix
-            gl::LoadIdentity();
-
-            gl::MatrixMode(gl::PROJECTION);
-
-            // Use identity matrix for the projection matrix
-            gl::LoadIdentity();
-
-            gl::Begin(gl::TRIANGLES);
-
-            let percentage = 0.9;
-
-            gl::Vertex2f(-percentage, -percentage);
-            gl::Vertex2f(percentage, -percentage);
-            gl::Vertex2f(percentage, percentage);
-
-            gl::Vertex2f(-percentage, -percentage);
-            gl::Vertex2f(percentage, percentage);
-            gl::Vertex2f(-percentage, percentage);
-
-            gl::End();
 
             SwapBuffers(device_context);
 
@@ -288,15 +281,9 @@ fn initialize_open_gl_addresses() {
     let _ = gl::TexImage2D::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ =
         gl::TexParameteri::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::TexEnvi::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::Enable::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::MatrixMode::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::LoadIdentity::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::Begin::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::End::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::Vertex2f::load_with(|function_name| get_open_gl_address(module, function_name));
 }
 
 fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
