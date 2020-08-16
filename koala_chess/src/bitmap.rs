@@ -117,21 +117,21 @@ pub fn load_bitmap(path: &str) -> Bitmap {
 
 fn read_u16(mut file: &File) -> u16 {
     let mut buffer = [0; 2];
-    file.read(&mut buffer).unwrap();
+    file.read_exact(&mut buffer).unwrap();
 
     u16::from_le_bytes(buffer)
 }
 
 fn read_u32(mut file: &File) -> u32 {
     let mut buffer = [0; 4];
-    file.read(&mut buffer).unwrap();
+    file.read_exact(&mut buffer).unwrap();
 
     u32::from_le_bytes(buffer)
 }
 
 fn read_i32(mut file: &File) -> i32 {
     let mut buffer = [0; 4];
-    file.read(&mut buffer).unwrap();
+    file.read_exact(&mut buffer).unwrap();
 
     i32::from_le_bytes(buffer)
 }
