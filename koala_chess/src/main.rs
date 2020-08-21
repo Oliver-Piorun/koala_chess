@@ -10,21 +10,21 @@ use std::{
 };
 use winapi::{
     shared::{
-        minwindef::{ATOM, BOOL, HMODULE, LPARAM, LRESULT, UINT, WORD, WPARAM},
+        minwindef::{ATOM, BOOL, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},
         windef::{HDC, HWND, RECT},
     },
     um::{
         libloaderapi::{GetModuleHandleW, GetProcAddress, LoadLibraryW},
         wingdi::{
-            wglCreateContext, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat,
-            SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_MAIN_PLANE,
-            PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
+            wglCreateContext, wglGetProcAddress, wglMakeCurrent, ChoosePixelFormat,
+            DescribePixelFormat, SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW,
+            PFD_MAIN_PLANE, PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
         },
         winuser::{
-            BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
-            GetDC, GetMessageW, PostQuitMessage, RegisterClassW, ReleaseDC, TranslateMessage,
-            CS_HREDRAW, CS_OWNDC, CS_VREDRAW, CW_USEDEFAULT, MSG, PAINTSTRUCT, WM_ACTIVATEAPP,
-            WM_CLOSE, WM_DESTROY, WM_PAINT, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+            CreateWindowExW, DefWindowProcW, DispatchMessageW, GetClientRect, GetDC, GetMessageW,
+            PostQuitMessage, RegisterClassW, ReleaseDC, TranslateMessage, CS_HREDRAW, CS_OWNDC,
+            CS_VREDRAW, CW_USEDEFAULT, MSG, PAINTSTRUCT, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY,
+            WM_PAINT, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
         },
     },
 };
@@ -34,8 +34,6 @@ lazy_static! {
 }
 
 fn main() {
-    *CHESSBOARD.lock().unwrap() = bitmap::load_bitmap("textures/chessboard.bmp");
-
     // Create window class name
     let mut window_class_name = OsStr::new("KoalaChessWindowClass\0")
         .encode_wide()
@@ -106,6 +104,117 @@ fn main() {
     // Initialize OpenGL
     initialize_open_gl(window);
 
+    *CHESSBOARD.lock().unwrap() = bitmap::load_bitmap("textures/chessboard.bmp");
+
+    #[rustfmt::skip]
+    let vertices: [f32; 32] = [
+        // positions,    colors,        texture coordinates
+         0.5,  0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
+         0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, // bottom left
+        -0.5,  0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, // top left
+    ];
+
+    let indices: [u32; 6] = [
+        0, 1, 3, // first triangle
+        1, 2, 3, // second triangle
+    ];
+
+    let mut vertex_array_object: gl::types::GLuint = 0;
+    let mut vertex_buffer_object: gl::types::GLuint = 0;
+    let mut element_buffer_object: gl::types::GLuint = 0;
+
+    let mut texture: gl::types::GLuint = 0;
+
+    unsafe {
+        gl::GenVertexArrays(1, &mut vertex_array_object);
+        gl::GenBuffers(1, &mut vertex_buffer_object);
+        gl::GenBuffers(1, &mut element_buffer_object);
+
+        gl::BindVertexArray(vertex_array_object);
+
+        gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_object);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            std::mem::size_of_val(&vertices) as isize,
+            vertices.as_ptr() as *const std::ffi::c_void,
+            gl::STATIC_DRAW,
+        );
+
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
+        gl::BufferData(
+            gl::ELEMENT_ARRAY_BUFFER,
+            std::mem::size_of_val(&indices) as isize,
+            indices.as_ptr() as *const std::ffi::c_void,
+            gl::STATIC_DRAW,
+        );
+
+        // Position attribute
+        gl::VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            32,
+            std::ptr::null::<std::ffi::c_void>(),
+        );
+        gl::EnableVertexAttribArray(0);
+
+        // Color attribute
+        gl::VertexAttribPointer(
+            1,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            32,
+            12 as *const std::ffi::c_void,
+        );
+        gl::EnableVertexAttribArray(1);
+
+        // Texture coordinates attribute
+        gl::VertexAttribPointer(
+            2,
+            2,
+            gl::FLOAT,
+            gl::FALSE,
+            32,
+            24 as *const std::ffi::c_void,
+        );
+        gl::EnableVertexAttribArray(2);
+
+        gl::Enable(gl::TEXTURE_2D);
+
+        // Generate texture
+        gl::GenTextures(1, &mut texture);
+
+        // Bind texture
+        gl::BindTexture(gl::TEXTURE_2D, texture);
+
+        // Parameterize texture
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+
+        // Setup texture
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as i32,
+            2048,
+            2048,
+            0,
+            gl::BGRA_EXT,
+            gl::UNSIGNED_BYTE,
+            CHESSBOARD.lock().unwrap().data.as_ptr() as *const std::ffi::c_void,
+        );
+
+        // Generate mipmap
+        gl::GenerateMipmap(gl::TEXTURE_2D);
+    }
+
+    let device_context = unsafe { GetDC(window) };
+
     // Window loop
     loop {
         let mut message = MSG::default();
@@ -131,6 +240,25 @@ fn main() {
             // INFO: These calls could fail, but we can't really handle those fails
             TranslateMessage(&message);
             DispatchMessageW(&message);
+        }
+
+        unsafe {
+            // Set the clear color
+            gl::ClearColor(1.0, 0.0, 1.0, 0.0);
+
+            // Clear the viewport with the clear color
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+
+            // Bind texture
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+
+            // Bind vertex array
+            gl::BindVertexArray(vertex_array_object);
+
+            // Draw elements
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+
+            SwapBuffers(device_context);
         }
     }
 }
@@ -160,47 +288,12 @@ unsafe extern "system" fn window_proc(
         }
         WM_ACTIVATEAPP => println!("WM_ACTIVATEAPP"),
         WM_PAINT => {
-            let mut paint = PAINTSTRUCT::default();
-            let device_context = BeginPaint(window, &mut paint);
+            let paint = PAINTSTRUCT::default();
             let width = paint.rcPaint.right - paint.rcPaint.left;
             let height = paint.rcPaint.bottom - paint.rcPaint.top;
 
+            // Set the viewport
             gl::Viewport(0, 0, width, height);
-
-            let mut texture: gl::types::GLuint = 0;
-
-            // Generate texture
-            gl::GenTextures(1, &mut texture);
-
-            // Bind texture
-            gl::BindTexture(gl::TEXTURE_2D, texture);
-
-            // Setup texture
-            gl::TexImage2D(
-                gl::TEXTURE_2D,
-                0,
-                gl::RGBA8 as i32,
-                2048,
-                2048,
-                0,
-                gl::BGRA_EXT,
-                gl::UNSIGNED_BYTE,
-                CHESSBOARD.lock().unwrap().data.as_ptr() as *const std::ffi::c_void,
-            );
-
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-
-            gl::Enable(gl::TEXTURE_2D);
-
-            gl::ClearColor(1.0, 0.0, 1.0, 0.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-
-            SwapBuffers(device_context);
-
-            EndPaint(window, &paint);
         }
         _ => (),
     };
@@ -275,6 +368,8 @@ fn initialize_open_gl_addresses() {
     }
 
     // Get and assign addresses
+
+    // OpenGL <=1.1
     let _ = gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::GenTextures::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::BindTexture::load_with(|function_name| get_open_gl_address(module, function_name));
@@ -284,14 +379,42 @@ fn initialize_open_gl_addresses() {
     let _ = gl::Enable::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
+
+    // OpenGL >1.1
+    let _ =
+        gl::GenVertexArrays::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::GenBuffers::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ =
+        gl::BindVertexArray::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::BindBuffer::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::BufferData::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::VertexAttribPointer::load_with(|function_name| {
+        get_open_gl_address(module, function_name)
+    });
+    let _ = gl::EnableVertexAttribArray::load_with(|function_name| {
+        get_open_gl_address(module, function_name)
+    });
+    let _ =
+        gl::GenerateMipmap::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::DrawElements::load_with(|function_name| get_open_gl_address(module, function_name));
 }
 
 fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
     let null_terminated_function_name = CString::new(function_name).unwrap();
 
-    // Get address
-    let address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
+    // Get address (via wglGetProcAddress)
+    let mut address = unsafe { wglGetProcAddress(null_terminated_function_name.as_ptr()) };
+
+    if address.is_null()
+        || address == 1 as PROC
+        || address == 2 as PROC
+        || address == 3 as PROC
+        || address == -1 as isize as PROC
+    {
+        // Get address (via GetProcAddress)
+        address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
+    }
 
     if address.is_null() {
         // TODO: Error handling
