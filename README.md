@@ -2,7 +2,7 @@
 A 2D chess game written in Rust.
 
 ## Supported platforms
-- Windows (OpenGL)
+- Windows (OpenGL ES 3.2)
 
 ## Technical goals
 - Use as few dependencies as possible
