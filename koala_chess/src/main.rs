@@ -1,4 +1,5 @@
 mod bitmap;
+mod shader;
 
 use bitmap::Bitmap;
 use lazy_static::lazy_static;
@@ -106,6 +107,8 @@ fn main() {
 
     *CHESSBOARD.lock().unwrap() = bitmap::load_bitmap("textures/chessboard.bmp");
 
+    let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
+
     #[rustfmt::skip]
     let vertices: [f32; 32] = [
         // positions,    colors,        texture coordinates
@@ -136,7 +139,7 @@ fn main() {
         gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_object);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            std::mem::size_of_val(&vertices) as isize,
+            std::mem::size_of_val(&vertices) as gl::types::GLsizeiptr,
             vertices.as_ptr() as *const std::ffi::c_void,
             gl::STATIC_DRAW,
         );
@@ -144,7 +147,7 @@ fn main() {
         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
         gl::BufferData(
             gl::ELEMENT_ARRAY_BUFFER,
-            std::mem::size_of_val(&indices) as isize,
+            std::mem::size_of_val(&indices) as gl::types::GLsizeiptr,
             indices.as_ptr() as *const std::ffi::c_void,
             gl::STATIC_DRAW,
         );
@@ -191,16 +194,32 @@ fn main() {
         gl::BindTexture(gl::TEXTURE_2D, texture);
 
         // Parameterize texture
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MIN_FILTER,
+            gl::NEAREST as gl::types::GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MAG_FILTER,
+            gl::NEAREST as gl::types::GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_S,
+            gl::CLAMP_TO_EDGE as gl::types::GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_T,
+            gl::CLAMP_TO_EDGE as gl::types::GLint,
+        );
 
         // Setup texture
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
-            gl::RGBA8 as i32,
+            gl::RGBA8 as gl::types::GLint,
             2048,
             2048,
             0,
@@ -251,6 +270,9 @@ fn main() {
 
             // Bind texture
             gl::BindTexture(gl::TEXTURE_2D, texture);
+
+            // Use specific shader
+            shader.r#use();
 
             // Bind vertex array
             gl::BindVertexArray(vertex_array_object);
@@ -381,6 +403,24 @@ fn initialize_open_gl_addresses() {
     let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
 
     // OpenGL >1.1
+    let _ = gl::CreateShader::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::ShaderSource::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ =
+        gl::CompileShader::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ =
+        gl::CreateProgram::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::AttachShader::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::LinkProgram::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::DeleteShader::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::UseProgram::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::GetShaderiv::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::GetProgramiv::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ =
+        gl::GetShaderInfoLog::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::GetProgramInfoLog::load_with(|function_name| {
+        get_open_gl_address(module, function_name)
+    });
+
     let _ =
         gl::GenVertexArrays::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::GenBuffers::load_with(|function_name| get_open_gl_address(module, function_name));
