@@ -17,7 +17,7 @@ impl Shader {
                 vertex_shader,
                 1,
                 &(vertex_shader_code.as_ptr() as *const gl::types::GLchar),
-                0 as *const gl::types::GLint,
+                std::ptr::null::<gl::types::GLint>(),
             );
 
             gl::CompileShader(vertex_shader);
@@ -31,7 +31,7 @@ impl Shader {
                 fragment_shader,
                 1,
                 &(fragment_shader_code.as_ptr() as *const gl::types::GLchar),
-                0 as *const gl::types::GLint,
+                std::ptr::null::<gl::types::GLint>(),
             );
 
             gl::CompileShader(fragment_shader);
@@ -76,7 +76,12 @@ fn check_for_shader_errors(shader: gl::types::GLuint) {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
 
         unsafe {
-            gl::GetShaderInfoLog(shader, 1024, 0 as *mut gl::types::GLsizei, log.as_mut_ptr())
+            gl::GetShaderInfoLog(
+                shader,
+                1024,
+                std::ptr::null_mut::<gl::types::GLsizei>(),
+                log.as_mut_ptr(),
+            )
         };
 
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
@@ -102,7 +107,7 @@ fn check_for_program_errors(program: gl::types::GLuint) {
             gl::GetProgramInfoLog(
                 program,
                 1024,
-                0 as *mut gl::types::GLsizei,
+                std::ptr::null_mut::<gl::types::GLsizei>(),
                 log.as_mut_ptr(),
             )
         };
