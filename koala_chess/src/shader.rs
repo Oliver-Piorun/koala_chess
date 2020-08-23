@@ -56,7 +56,7 @@ impl Shader {
         }
     }
 
-    pub fn r#use(self: &Self) {
+    pub fn r#use(&self) {
         unsafe {
             gl::UseProgram(self.program);
         }
@@ -70,7 +70,20 @@ fn check_for_shader_errors(shader: gl::types::GLuint) {
         gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
     }
 
-    println!("Compile status: {}", success);
+    println!("Shader compile status: {}", success);
+
+    if success == 0 {
+        let mut log: [gl::types::GLchar; 1024] = [0; 1024];
+
+        unsafe {
+            gl::GetShaderInfoLog(shader, 1024, 0 as *mut gl::types::GLsizei, log.as_mut_ptr())
+        };
+
+        let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr())};
+        let log_str = log_cstr.to_str().unwrap();
+
+        println!("Shader compile error: {}", log_str);
+    }
 }
 
 fn check_for_program_errors(program: gl::types::GLuint) {
@@ -80,5 +93,19 @@ fn check_for_program_errors(program: gl::types::GLuint) {
         gl::GetProgramiv(program, gl::LINK_STATUS, &mut success);
     }
 
-    println!("Link status: {}", success);
+    println!("Shader program link status: {}", success);
+
+    if success == 0
+    {
+        let mut log: [gl::types::GLchar; 1024] = [0; 1024];
+
+        unsafe {
+            gl::GetProgramInfoLog(program, 1024, 0 as *mut gl::types::GLsizei, log.as_mut_ptr())
+        };
+
+        let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr())};
+        let log_str = log_cstr.to_str().unwrap();
+
+        println!("Shader program link error: {}", log_str);
+    }
 }
