@@ -7,7 +7,10 @@ use std::{
     ffi::{CString, OsStr},
     io,
     os::windows::ffi::OsStrExt,
-    sync::Mutex,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
 };
 use winapi::{
     shared::{
@@ -31,7 +34,7 @@ use winapi::{
 };
 
 lazy_static! {
-    static ref INITIALIZED_OPEN_GL: Mutex<bool> = Mutex::new(false);
+    static ref INITIALIZED_OPEN_GL: AtomicBool = AtomicBool::new(false);
     static ref CHESSBOARD: Mutex<Bitmap> = Mutex::new(Bitmap::default());
 }
 
@@ -301,7 +304,7 @@ unsafe extern "system" fn window_proc(
             let height = rect.bottom - rect.top;
             println!("width: {} / height: {}", width, height);
 
-            if *INITIALIZED_OPEN_GL.lock().unwrap() {
+            if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
                 // Set viewport
                 gl::Viewport(0, 0, width, height);
             }
@@ -337,7 +340,7 @@ fn initialize_open_gl(window: HWND) {
 
     initialize_open_gl_addresses();
 
-    *INITIALIZED_OPEN_GL.lock().unwrap() = true;
+    INITIALIZED_OPEN_GL.store(true, Ordering::SeqCst);
 }
 
 fn negotiate_pixel_format(device_context: HDC) {
