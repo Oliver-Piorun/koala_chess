@@ -24,13 +24,14 @@ use winapi::{
         winuser::{
             CreateWindowExW, DefWindowProcW, DispatchMessageW, GetClientRect, GetDC, GetMessageW,
             PostQuitMessage, RegisterClassW, ReleaseDC, TranslateMessage, CS_HREDRAW, CS_OWNDC,
-            CS_VREDRAW, CW_USEDEFAULT, MSG, PAINTSTRUCT, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY,
-            WM_PAINT, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+            CS_VREDRAW, CW_USEDEFAULT, MSG, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY, WM_SIZE,
+            WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
         },
     },
 };
 
 lazy_static! {
+    static ref INITIALIZED_OPEN_GL: Mutex<bool> = Mutex::new(false);
     static ref CHESSBOARD: Mutex<Bitmap> = Mutex::new(Bitmap::default());
 }
 
@@ -299,6 +300,11 @@ unsafe extern "system" fn window_proc(
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
             println!("width: {} / height: {}", width, height);
+
+            if *INITIALIZED_OPEN_GL.lock().unwrap() {
+                // Set viewport
+                gl::Viewport(0, 0, width, height);
+            }
         }
         WM_DESTROY => {
             println!("WM_DESTROY");
@@ -309,14 +315,6 @@ unsafe extern "system" fn window_proc(
             PostQuitMessage(0);
         }
         WM_ACTIVATEAPP => println!("WM_ACTIVATEAPP"),
-        WM_PAINT => {
-            let paint = PAINTSTRUCT::default();
-            let width = paint.rcPaint.right - paint.rcPaint.left;
-            let height = paint.rcPaint.bottom - paint.rcPaint.top;
-
-            // Set the viewport
-            gl::Viewport(0, 0, width, height);
-        }
         _ => (),
     };
 
@@ -338,6 +336,8 @@ fn initialize_open_gl(window: HWND) {
     unsafe { ReleaseDC(window, device_context) };
 
     initialize_open_gl_addresses();
+
+    *INITIALIZED_OPEN_GL.lock().unwrap() = true;
 }
 
 fn negotiate_pixel_format(device_context: HDC) {
