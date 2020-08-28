@@ -240,6 +240,7 @@ fn main() {
 
     let device_context = unsafe { GetDC(window) };
 
+    // The frequency of the performance counter is fixed at system boot and is consistent across all processors
     let mut performance_frequency = LARGE_INTEGER::default();
     unsafe { QueryPerformanceFrequency(&mut performance_frequency) };
 
