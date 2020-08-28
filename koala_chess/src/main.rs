@@ -19,11 +19,13 @@ use winapi::{
     },
     um::{
         libloaderapi::{GetModuleHandleW, GetProcAddress, LoadLibraryW},
+        profileapi::{QueryPerformanceCounter, QueryPerformanceFrequency},
         wingdi::{
             wglCreateContext, wglGetProcAddress, wglMakeCurrent, ChoosePixelFormat,
             DescribePixelFormat, SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW,
             PFD_MAIN_PLANE, PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
         },
+        winnt::LARGE_INTEGER,
         winuser::{
             CreateWindowExW, DefWindowProcW, DispatchMessageW, GetClientRect, GetDC, GetMessageW,
             PostQuitMessage, RegisterClassW, ReleaseDC, TranslateMessage, CS_HREDRAW, CS_OWNDC,
@@ -238,6 +240,12 @@ fn main() {
 
     let device_context = unsafe { GetDC(window) };
 
+    let mut performance_frequency = LARGE_INTEGER::default();
+    unsafe { QueryPerformanceFrequency(&mut performance_frequency) };
+
+    let mut last_performance_counter = LARGE_INTEGER::default();
+    unsafe { QueryPerformanceCounter(&mut last_performance_counter) };
+
     // Window loop
     loop {
         let mut message = MSG::default();
@@ -284,6 +292,27 @@ fn main() {
 
             SwapBuffers(device_context);
         }
+
+        let mut end_performance_counter = LARGE_INTEGER::default();
+        unsafe { QueryPerformanceCounter(&mut end_performance_counter) };
+
+        let elapsed_performance_counter =
+            unsafe { end_performance_counter.QuadPart() - last_performance_counter.QuadPart() };
+
+        // ms = 1000 * counter / (counter / s) = 1000 * counter * (s / counter)
+        let elapsed_milliseconds = 1000f64 * elapsed_performance_counter as f64
+            / unsafe { *performance_frequency.QuadPart() as f64 };
+
+        // 1/s = (counter / s) / counter
+        let frames_per_second = unsafe { *performance_frequency.QuadPart() as f64 }
+            / elapsed_performance_counter as f64;
+
+        println!(
+            "frames per second: {} / frame time: {}ms",
+            frames_per_second, elapsed_milliseconds
+        );
+
+        last_performance_counter = end_performance_counter;
     }
 }
 
@@ -295,12 +324,12 @@ unsafe extern "system" fn window_proc(
 ) -> LRESULT {
     match message {
         WM_SIZE => {
-            println!("WM_SIZE");
+            println!("window_proc: WM_SIZE");
             let mut rect = RECT::default();
             GetClientRect(window, &mut rect);
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
-            println!("width: {} / height: {}", width, height);
+            println!("WM_SIZE: width: {} / height: {}", width, height);
 
             if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
                 // Set viewport
@@ -308,14 +337,14 @@ unsafe extern "system" fn window_proc(
             }
         }
         WM_DESTROY => {
-            println!("WM_DESTROY");
+            println!("window_proc: WM_DESTROY");
             PostQuitMessage(0);
         }
         WM_CLOSE => {
-            println!("WM_CLOSE");
+            println!("window_proc: WM_CLOSE");
             PostQuitMessage(0);
         }
-        WM_ACTIVATEAPP => println!("WM_ACTIVATEAPP"),
+        WM_ACTIVATEAPP => println!("window_proc: WM_ACTIVATEAPP"),
         _ => (),
     };
 
