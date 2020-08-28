@@ -131,14 +131,14 @@ fn main() {
 
     let mut vertex_array_object: gl::types::GLuint = 0;
     let mut vertex_buffer_object: gl::types::GLuint = 0;
-    let mut index_buffer_object: gl::types::GLuint = 0;
+    let mut element_buffer_object: gl::types::GLuint = 0;
 
     let mut texture: gl::types::GLuint = 0;
 
     unsafe {
         gl::GenVertexArrays(1, &mut vertex_array_object);
         gl::GenBuffers(1, &mut vertex_buffer_object);
-        gl::GenBuffers(1, &mut index_buffer_object);
+        gl::GenBuffers(1, &mut element_buffer_object);
 
         gl::BindVertexArray(vertex_array_object);
 
@@ -150,7 +150,7 @@ fn main() {
             gl::STATIC_DRAW,
         );
 
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_object);
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
         gl::BufferData(
             gl::ELEMENT_ARRAY_BUFFER,
             std::mem::size_of_val(&indices) as gl::types::GLsizeiptr,
