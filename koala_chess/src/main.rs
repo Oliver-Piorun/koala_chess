@@ -263,9 +263,7 @@ fn main() {
             // INFO: These calls could fail, but we can't really handle those fails
             TranslateMessage(&message);
             DispatchMessageW(&message);
-        }
 
-        unsafe {
             // Set the clear color
             gl::ClearColor(1.0, 0.0, 1.0, 0.0);
 
