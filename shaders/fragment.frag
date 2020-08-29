@@ -1,4 +1,6 @@
-#version 330 core
+#version 320 es
+precision mediump float;
+
 in vec3 color;
 in vec2 texture_coordinate;
 
