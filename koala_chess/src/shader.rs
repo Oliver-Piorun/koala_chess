@@ -56,10 +56,23 @@ impl Shader {
         }
     }
 
-    pub fn r#use(&self) {
-        unsafe {
-            gl::UseProgram(self.program);
+    pub unsafe fn r#use(&self) {
+        gl::UseProgram(self.program);
+    }
+
+    pub unsafe fn set_float(&self, name: &str, value: gl::types::GLfloat) {
+        let uniform_location =
+            gl::GetUniformLocation(self.program, name.as_ptr() as *const gl::types::GLchar);
+
+        if uniform_location == -1 {
+            eprintln!(
+                "Could not get uniform location! (name: {}, value: {})",
+                name, value
+            );
+            return;
         }
+
+        gl::Uniform1f(uniform_location, value);
     }
 }
 

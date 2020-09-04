@@ -36,6 +36,7 @@ use winapi::{
 };
 
 lazy_static! {
+    static ref ASPECT_RATIO: Mutex<f32> = Mutex::new(1.0);
     static ref INITIALIZED_OPEN_GL: AtomicBool = AtomicBool::new(false);
     static ref CHESSBOARD: Mutex<Bitmap> = Mutex::new(Bitmap::default());
 }
@@ -70,7 +71,7 @@ fn main() {
     if error_code == 0 {
         // TODO: Error handling
         eprintln!(
-            "Could not register window class! ({})",
+            "Could not register window class! (os error: {})",
             io::Error::last_os_error()
         );
         return;
@@ -104,7 +105,10 @@ fn main() {
 
     if window.is_null() {
         // TODO: Error handling
-        eprintln!("Could not create window! ({})", io::Error::last_os_error());
+        eprintln!(
+            "Could not create window! (os error: {})",
+            io::Error::last_os_error()
+        );
         return;
     }
 
@@ -259,7 +263,7 @@ fn main() {
         if message_result == -1 {
             // TODO: Error handling
             eprintln!(
-                "Could not retrieve message! ({})",
+                "Could not retrieve message! (os error: {})",
                 io::Error::last_os_error()
             );
             return;
@@ -284,6 +288,7 @@ fn main() {
 
             // Use specific shader
             shader.r#use();
+            shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
 
             // Bind vertex array
             gl::BindVertexArray(vertex_array_object);
@@ -330,7 +335,10 @@ unsafe extern "system" fn window_proc(
             GetClientRect(window, &mut rect);
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
-            println!("WM_SIZE: width: {} / height: {}", width, height);
+            let aspect_ratio = width as f32 / height as f32;
+            println!("WM_SIZE: width: {} / height: {} / aspect_ratio: {}", width, height, aspect_ratio);
+
+            *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
 
             if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
                 // Set viewport
@@ -416,7 +424,10 @@ fn initialize_open_gl_addresses() {
 
     if module.is_null() {
         // TODO: Error handling
-        eprintln!("OpenGL module is null! ({})", io::Error::last_os_error());
+        eprintln!(
+            "OpenGL module is null! (os error: {})",
+            io::Error::last_os_error()
+        );
         return;
     }
 
@@ -444,6 +455,10 @@ fn initialize_open_gl_addresses() {
     let _ = gl::LinkProgram::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::DeleteShader::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::UseProgram::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::GetUniformLocation::load_with(|function_name| {
+        get_open_gl_address(module, function_name)
+    });
+    let _ = gl::Uniform1f::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::GetShaderiv::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::GetProgramiv::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ =
@@ -489,7 +504,10 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
 
     if address.is_null() {
         // TODO: Error handling
-        eprintln!("OpenGL address is null! ({})", io::Error::last_os_error());
+        eprintln!(
+            "OpenGL address is null! (os error: {})",
+            io::Error::last_os_error()
+        );
     }
 
     address as *const std::ffi::c_void
