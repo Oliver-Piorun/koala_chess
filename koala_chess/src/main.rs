@@ -336,7 +336,10 @@ unsafe extern "system" fn window_proc(
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
             let aspect_ratio = width as f32 / height as f32;
-            println!("WM_SIZE: width: {} / height: {} / aspect_ratio: {}", width, height, aspect_ratio);
+            println!(
+                "WM_SIZE: width: {} / height: {} / aspect_ratio: {}",
+                width, height, aspect_ratio
+            );
 
             *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
 
