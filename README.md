@@ -1,5 +1,5 @@
 # Koala chess
-A 2D chess game written in Rust.
+A 2D chess game written in [Rust](https://www.rust-lang.org).
 
 ## Supported platforms
 - Windows (OpenGL ES 3.2)
