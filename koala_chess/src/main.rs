@@ -11,10 +11,12 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Mutex,
     },
+    time::SystemTime,
+    time::UNIX_EPOCH,
 };
 use winapi::{
     shared::{
-        minwindef::{ATOM, BOOL, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},
+        minwindef::{ATOM, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},
         windef::{HDC, HWND, RECT},
     },
     um::{
@@ -27,9 +29,9 @@ use winapi::{
         },
         winnt::LARGE_INTEGER,
         winuser::{
-            CreateWindowExW, DefWindowProcW, DispatchMessageW, GetClientRect, GetDC, GetMessageW,
+            CreateWindowExW, DefWindowProcW, DispatchMessageW, GetClientRect, GetDC, PeekMessageW,
             PostQuitMessage, RegisterClassW, ReleaseDC, TranslateMessage, CS_HREDRAW, CS_OWNDC,
-            CS_VREDRAW, CW_USEDEFAULT, MSG, WM_ACTIVATEAPP, WM_CLOSE, WM_DESTROY, WM_SIZE,
+            CS_VREDRAW, CW_USEDEFAULT, MSG, PM_REMOVE, WM_CLOSE, WM_DESTROY, WM_QUIT, WM_SIZE,
             WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
         },
     },
@@ -251,32 +253,34 @@ fn main() {
     let mut last_performance_counter = LARGE_INTEGER::default();
     unsafe { QueryPerformanceCounter(&mut last_performance_counter) };
 
-    // Window loop
-    loop {
+    let mut running = true;
+
+    while running {
         let mut message = MSG::default();
-        let message_result: BOOL;
 
-        unsafe {
-            message_result = GetMessageW(&mut message, std::ptr::null_mut(), 0, 0);
+        // Window loop
+        while unsafe { PeekMessageW(&mut message, std::ptr::null_mut(), 0, 0, PM_REMOVE) } != 0 {
+            if message.message == WM_QUIT {
+                println!("window_proc: WM_QUIT");
+                running = false;
+                break;
+            }
+
+            unsafe {
+                // INFO: These calls could fail, but we can't really handle those fails
+                TranslateMessage(&message);
+                DispatchMessageW(&message);
+            }
         }
 
-        if message_result == -1 {
-            // TODO: Error handling
-            eprintln!(
-                "Could not retrieve message! (os error: {})",
-                io::Error::last_os_error()
-            );
-            return;
-        } else if message_result == 0 {
-            // WM_CLOSE message
-            return;
-        }
+        // Rendering
+        let time = (SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis()
+            % 10000) as f32;
 
         unsafe {
-            // INFO: These calls could fail, but we can't really handle those fails
-            TranslateMessage(&message);
-            DispatchMessageW(&message);
-
             // Set the clear color
             gl::ClearColor(1.0, 0.0, 1.0, 0.0);
 
@@ -289,6 +293,7 @@ fn main() {
             // Use specific shader
             shader.r#use();
             shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
+            shader.set_float("time\0", time);
 
             // Bind vertex array
             gl::BindVertexArray(vertex_array_object);
@@ -356,7 +361,6 @@ unsafe extern "system" fn window_proc(
             println!("window_proc: WM_CLOSE");
             PostQuitMessage(0);
         }
-        WM_ACTIVATEAPP => println!("window_proc: WM_ACTIVATEAPP"),
         _ => (),
     };
 
