@@ -282,7 +282,7 @@ fn main() {
 
         unsafe {
             // Set the clear color
-            gl::ClearColor(1.0, 0.0, 1.0, 0.0);
+            gl::ClearColor(0.17, 0.32, 0.59, 0.0);
 
             // Clear the viewport with the clear color
             gl::Clear(gl::COLOR_BUFFER_BIT);
