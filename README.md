@@ -8,6 +8,8 @@ A 2D chess game written in [Rust](https://www.rust-lang.org).
 This game is currently heavily in development. :construction:
 
 Feel free to build it from source until a playable version is being released! :blush:
+
+### Step by step
 - Get [Rust](https://www.rust-lang.org/tools/install)
 - Clone the repository
 - Navigate to the cloned repository
