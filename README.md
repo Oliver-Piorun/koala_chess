@@ -4,7 +4,7 @@ A 2D chess game written in [Rust](https://www.rust-lang.org).
 ## :computer: Supported platforms
 - Windows (OpenGL ES 3.2)
 
-## Getting started
+## :zap: Getting started
 This game is currently heavily in development. :construction:
 
 Feel free to build it from source until a playable version is being released! :blush:
@@ -13,11 +13,11 @@ Feel free to build it from source until a playable version is being released! :b
 - Navigate to the cloned repository
 - Run `cargo run --release`
 
-## Technical goals
+## :wrench: Technical goals
 - Use as few dependencies as possible
 - Keep an eye on performance
 
-## Personal goals
+## :bulb: Personal goals
 - Learn more about Rust, rendering and game development
 
 ## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
