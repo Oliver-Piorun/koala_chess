@@ -1,8 +1,8 @@
 # Koala chess
 A 2D chess game written in [Rust](https://www.rust-lang.org).
 
-## Supported platforms
-:white_check_mark: Windows (OpenGL ES 3.2)
+## :computer: Supported platforms
+- Windows (OpenGL ES 3.2)
 
 ## Getting started
 This game is currently heavily in development. :construction:
@@ -20,7 +20,7 @@ Feel free to build it from source until a playable version is being released! :b
 ## Personal goals
 - Learn more about Rust, rendering and game development
 
-## [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
+## :notes: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
 
 ---
 
