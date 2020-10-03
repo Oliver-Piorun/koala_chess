@@ -2,7 +2,7 @@
 A 2D chess game written in [Rust](https://www.rust-lang.org).
 
 ## Supported platforms
-- Windows (OpenGL ES 3.2)
+:heavy_check_mark: Windows (OpenGL ES 3.2)
 
 ## Getting started
 This game is currently heavily in development. :construction:
