@@ -1,7 +1,6 @@
 mod bitmap;
 mod shader;
 
-use bitmap::Bitmap;
 use lazy_static::lazy_static;
 use std::{
     ffi::{CString, OsStr},
@@ -40,7 +39,6 @@ use winapi::{
 lazy_static! {
     static ref ASPECT_RATIO: Mutex<f32> = Mutex::new(1.0);
     static ref INITIALIZED_OPEN_GL: AtomicBool = AtomicBool::new(false);
-    static ref CHESSBOARD: Mutex<Bitmap> = Mutex::new(Bitmap::default());
 }
 
 fn main() {
@@ -117,7 +115,7 @@ fn main() {
     // Initialize OpenGL
     initialize_open_gl(window);
 
-    *CHESSBOARD.lock().unwrap() = bitmap::load_bitmap("textures/chessboard.bmp");
+    let chessboard = bitmap::load_bitmap("textures/chessboard.bmp");
 
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
 
@@ -237,7 +235,7 @@ fn main() {
             0,
             gl::BGRA_EXT,
             gl::UNSIGNED_BYTE,
-            CHESSBOARD.lock().unwrap().data.as_ptr() as *const std::ffi::c_void,
+            chessboard.data.as_ptr() as *const std::ffi::c_void,
         );
 
         // Generate mipmap
