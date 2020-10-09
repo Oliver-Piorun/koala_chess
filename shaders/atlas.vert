@@ -5,14 +5,12 @@ layout (location = 0) in vec3 in_position;
 layout (location = 1) in vec3 in_color;
 layout (location = 2) in vec2 in_texture_coordinate;
 
+uniform float tile_x;
+uniform float tile_y;
 uniform float aspect_ratio;
 
 out vec3 color;
 out vec2 texture_coordinate;
-
-// TODO: Make this inputs
-const float tile_x = 0.0 * 2.0 + 1.0;
-const float tile_y = 0.0 * 2.0 + 1.0;
 
 const float texture_size = 1024.0;
 const float border_size = 6.0;
@@ -31,8 +29,10 @@ const float scale = tile_size / texture_size;
 
 void main()
 {
-    float corrected_x = (in_position.x + tile_x) * scale;
-    float corrected_y = (in_position.y + tile_y) * scale;
+    float corrected_tile_x = tile_x * 2.0 - 7.0;
+    float corrected_tile_y = tile_y * 2.0 - 7.0;
+    float corrected_x = (in_position.x + corrected_tile_x) * scale;
+    float corrected_y = (in_position.y + corrected_tile_y) * scale;
 
     if (aspect_ratio >= 1.0)
     {

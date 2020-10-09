@@ -397,6 +397,10 @@ fn main() {
 
             // Use specific shader
             atlas_shader.r#use();
+            atlas_shader.set_float("tile_x\0", 3.0);
+            atlas_shader.set_float("tile_y\0", 3.0);
+            atlas_shader.set_float("piece_x\0", 2.0);
+            atlas_shader.set_float("piece_y\0", 2.0);
             atlas_shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
 
             // Draw elements
