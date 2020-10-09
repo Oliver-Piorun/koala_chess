@@ -17,11 +17,11 @@ void main()
 
     if (aspect_ratio >= 1.0)
     {
-        corrected_x = in_position.x / aspect_ratio;
+        corrected_x /= aspect_ratio;
     }
     else
     {
-        corrected_y = in_position.y * aspect_ratio;
+        corrected_y *= aspect_ratio;
     }
 
     gl_Position = vec4(vec3(corrected_x, corrected_y, in_position.z), 1.0);
