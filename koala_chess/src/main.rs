@@ -116,6 +116,7 @@ fn main() {
     initialize_open_gl(window);
 
     let chessboard = bitmap::load_bitmap("textures/chessboard.bmp");
+    let pieces = bitmap::load_bitmap("textures/pieces.bmp");
 
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
 
@@ -137,13 +138,15 @@ fn main() {
     let mut vertex_buffer_object: gl::types::GLuint = 0;
     let mut element_buffer_object: gl::types::GLuint = 0;
 
-    let mut texture: gl::types::GLuint = 0;
+    let mut chessboard_texture: gl::types::GLuint = 0;
+    let mut pieces_texture: gl::types::GLuint = 0;
 
     unsafe {
         gl::GenVertexArrays(1, &mut vertex_array_object);
         gl::GenBuffers(1, &mut vertex_buffer_object);
         gl::GenBuffers(1, &mut element_buffer_object);
 
+        // Bind vertex array
         gl::BindVertexArray(vertex_array_object);
 
         gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_object);
@@ -196,14 +199,16 @@ fn main() {
         gl::EnableVertexAttribArray(2);
 
         gl::Enable(gl::TEXTURE_2D);
+        gl::Enable(gl::BLEND);
+        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
-        // Generate texture
-        gl::GenTextures(1, &mut texture);
+        // Generate chessboard texture
+        gl::GenTextures(1, &mut chessboard_texture);
 
-        // Bind texture
-        gl::BindTexture(gl::TEXTURE_2D, texture);
+        // Bind chessboard texture
+        gl::BindTexture(gl::TEXTURE_2D, chessboard_texture);
 
-        // Parameterize texture
+        // Parameterize chessboard texture
         gl::TexParameteri(
             gl::TEXTURE_2D,
             gl::TEXTURE_MIN_FILTER,
@@ -225,7 +230,7 @@ fn main() {
             gl::CLAMP_TO_EDGE as gl::types::GLint,
         );
 
-        // Setup texture
+        // Setup chessboard texture
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
@@ -236,6 +241,47 @@ fn main() {
             gl::BGRA_EXT,
             gl::UNSIGNED_BYTE,
             chessboard.data.as_ptr() as *const std::ffi::c_void,
+        );
+
+        // Generate pieces texture
+        gl::GenTextures(1, &mut pieces_texture);
+
+        // Bind pieces texture
+        gl::BindTexture(gl::TEXTURE_2D, pieces_texture);
+
+        // Parameterize pieces texture
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MIN_FILTER,
+            gl::NEAREST as gl::types::GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MAG_FILTER,
+            gl::NEAREST as gl::types::GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_S,
+            gl::CLAMP_TO_EDGE as gl::types::GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_T,
+            gl::CLAMP_TO_EDGE as gl::types::GLint,
+        );
+
+        // Setup pieces texture
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA8 as gl::types::GLint,
+            1024,
+            1024,
+            0,
+            gl::BGRA_EXT,
+            gl::UNSIGNED_BYTE,
+            pieces.data.as_ptr() as *const std::ffi::c_void,
         );
 
         // Generate mipmap
@@ -285,16 +331,24 @@ fn main() {
             // Clear the viewport with the clear color
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            // Bind texture
-            gl::BindTexture(gl::TEXTURE_2D, texture);
+            // Bind chessboard texture
+            gl::BindTexture(gl::TEXTURE_2D, chessboard_texture);
 
             // Use specific shader
             shader.r#use();
             shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
             shader.set_float("time\0", time);
 
-            // Bind vertex array
-            gl::BindVertexArray(vertex_array_object);
+            // Draw elements
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+
+            // Bind pieces texture
+            gl::BindTexture(gl::TEXTURE_2D, pieces_texture);
+
+            // Use specific shader
+            shader.r#use();
+            shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
+            shader.set_float("time\0", time);
 
             // Draw elements
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
@@ -488,6 +542,7 @@ fn initialize_open_gl_addresses() {
     let _ =
         gl::GenerateMipmap::load_with(|function_name| get_open_gl_address(module, function_name));
     let _ = gl::DrawElements::load_with(|function_name| get_open_gl_address(module, function_name));
+    let _ = gl::BlendFunc::load_with(|function_name| get_open_gl_address(module, function_name));
 }
 
 fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
