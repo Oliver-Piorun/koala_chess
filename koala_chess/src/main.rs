@@ -122,12 +122,21 @@ fn main() {
     let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
 
     #[rustfmt::skip]
-    let vertices: [f32; 32] = [
+    let chessboard_vertices: [f32; 32] = [
         // positions,    colors,        texture coordinates
          0.8,  0.8, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
          0.8, -0.8, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
         -0.8, -0.8, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
         -0.8,  0.8, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+    ];
+
+    #[rustfmt::skip]
+    let pieces_vertices: [f32; 32] = [
+        // positions,    colors,        texture coordinates
+         1.0,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
+         1.0, -1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
+        -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
+        -1.0,  1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
     ];
 
     let indices: [u32; 6] = [
@@ -150,11 +159,12 @@ fn main() {
         // Bind vertex array
         gl::BindVertexArray(vertex_array_object);
 
+        // Chessboard
         gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[0]);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            std::mem::size_of_val(&vertices) as gl::types::GLsizeiptr,
-            vertices.as_ptr() as *const std::ffi::c_void,
+            std::mem::size_of_val(&chessboard_vertices) as gl::types::GLsizeiptr,
+            chessboard_vertices.as_ptr() as *const std::ffi::c_void,
             gl::STATIC_DRAW,
         );
 
@@ -166,38 +176,14 @@ fn main() {
             gl::STATIC_DRAW,
         );
 
-        // Position attribute
-        gl::VertexAttribPointer(
-            0,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            32,
-            std::ptr::null::<std::ffi::c_void>(),
+        // Pieces
+        gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[1]);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            std::mem::size_of_val(&pieces_vertices) as gl::types::GLsizeiptr,
+            pieces_vertices.as_ptr() as *const std::ffi::c_void,
+            gl::STATIC_DRAW,
         );
-        gl::EnableVertexAttribArray(0);
-
-        // Color attribute
-        gl::VertexAttribPointer(
-            1,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            32,
-            12 as *const std::ffi::c_void,
-        );
-        gl::EnableVertexAttribArray(1);
-
-        // Texture coordinates attribute
-        gl::VertexAttribPointer(
-            2,
-            2,
-            gl::FLOAT,
-            gl::FALSE,
-            32,
-            24 as *const std::ffi::c_void,
-        );
-        gl::EnableVertexAttribArray(2);
 
         gl::Enable(gl::TEXTURE_2D);
         gl::Enable(gl::BLEND);
@@ -332,6 +318,42 @@ fn main() {
             // Clear the viewport with the clear color
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
+            // Bind chessboard VBO
+            gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[0]);
+
+            // Position attribute
+            gl::VertexAttribPointer(
+                0,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                32,
+                std::ptr::null::<std::ffi::c_void>(),
+            );
+            gl::EnableVertexAttribArray(0);
+
+            // Color attribute
+            gl::VertexAttribPointer(
+                1,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                32,
+                12 as *const std::ffi::c_void,
+            );
+            gl::EnableVertexAttribArray(1);
+
+            // Texture coordinates attribute
+            gl::VertexAttribPointer(
+                2,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                32,
+                24 as *const std::ffi::c_void,
+            );
+            gl::EnableVertexAttribArray(2);
+
             // Bind chessboard texture
             gl::BindTexture(gl::TEXTURE_2D, chessboard_texture);
 
@@ -341,6 +363,42 @@ fn main() {
 
             // Draw elements
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+
+            // Bind pieces VBO
+            gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[1]);
+
+            // Position attribute
+            gl::VertexAttribPointer(
+                0,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                32,
+                std::ptr::null::<std::ffi::c_void>(),
+            );
+            gl::EnableVertexAttribArray(0);
+
+            // Color attribute
+            gl::VertexAttribPointer(
+                1,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                32,
+                12 as *const std::ffi::c_void,
+            );
+            gl::EnableVertexAttribArray(1);
+
+            // Texture coordinates attribute
+            gl::VertexAttribPointer(
+                2,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                32,
+                24 as *const std::ffi::c_void,
+            );
+            gl::EnableVertexAttribArray(2);
 
             // Bind pieces texture
             gl::BindTexture(gl::TEXTURE_2D, pieces_texture);
