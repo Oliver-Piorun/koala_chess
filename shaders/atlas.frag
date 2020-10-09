@@ -4,9 +4,9 @@ precision mediump float;
 in vec3 color;
 in vec2 texture_coordinate;
 
-out vec4 fragment_color;
-
 uniform sampler2D uniform_texture;
+
+out vec4 fragment_color;
 
 void main()
 {

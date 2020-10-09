@@ -136,7 +136,7 @@ fn main() {
     ];
 
     let mut vertex_array_object: gl::types::GLuint = 0;
-    let mut vertex_buffer_object: gl::types::GLuint = 0;
+    let mut vertex_buffer_objects: [gl::types::GLuint; 2] = [0; 2];
     let mut element_buffer_object: gl::types::GLuint = 0;
 
     let mut chessboard_texture: gl::types::GLuint = 0;
@@ -144,13 +144,13 @@ fn main() {
 
     unsafe {
         gl::GenVertexArrays(1, &mut vertex_array_object);
-        gl::GenBuffers(1, &mut vertex_buffer_object);
+        gl::GenBuffers(2, &mut vertex_buffer_objects[0]);
         gl::GenBuffers(1, &mut element_buffer_object);
 
         // Bind vertex array
         gl::BindVertexArray(vertex_array_object);
 
-        gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_object);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[0]);
         gl::BufferData(
             gl::ARRAY_BUFFER,
             std::mem::size_of_val(&vertices) as gl::types::GLsizeiptr,
