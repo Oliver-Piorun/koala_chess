@@ -10,8 +10,6 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Mutex,
     },
-    time::SystemTime,
-    time::UNIX_EPOCH,
 };
 use winapi::{
     shared::{
@@ -305,12 +303,6 @@ fn main() {
         }
 
         // Rendering
-        let time = (SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-            % 10000) as f32;
-
         unsafe {
             // Set the clear color
             gl::ClearColor(0.17, 0.32, 0.59, 0.0);
