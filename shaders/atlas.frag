@@ -18,5 +18,7 @@ const float scale = piece_size / texture_size;
 
 void main()
 {
-    fragment_color = texture(uniform_texture, vec2((texture_coordinate.x + piece_x) * scale, (texture_coordinate.y + piece_y) * scale));
+    float corrected_piece_y = piece_y + 1.0;
+
+    fragment_color = texture(uniform_texture, vec2((texture_coordinate.x + piece_x) * scale, (texture_coordinate.y + corrected_piece_y) * scale));
 }
