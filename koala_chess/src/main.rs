@@ -337,7 +337,6 @@ fn main() {
             // Use specific shader
             shader.r#use();
             shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
-            shader.set_float("time\0", time);
 
             // Draw elements
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
@@ -348,7 +347,6 @@ fn main() {
             // Use specific shader
             shader.r#use();
             shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
-            shader.set_float("time\0", time);
 
             // Draw elements
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());

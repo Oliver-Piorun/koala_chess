@@ -6,7 +6,6 @@ layout (location = 1) in vec3 in_color;
 layout (location = 2) in vec2 in_texture_coordinate;
 
 uniform float aspect_ratio;
-uniform float time;
 
 out vec3 color;
 out vec2 texture_coordinate;
@@ -25,7 +24,7 @@ void main()
         corrected_y = in_position.y * aspect_ratio;
     }
 
-    gl_Position = vec4(vec3(corrected_x * time / 10000.0, corrected_y * time / 10000.0, in_position.z), 1.0);
+    gl_Position = vec4(vec3(corrected_x, corrected_y, in_position.z), 1.0);
     color = in_color;
     texture_coordinate = in_texture_coordinate;
 }
