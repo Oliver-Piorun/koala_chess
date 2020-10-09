@@ -119,6 +119,7 @@ fn main() {
     let pieces = bitmap::load_bitmap("textures/pieces.bmp");
 
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
+    let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
 
     #[rustfmt::skip]
     let vertices: [f32; 32] = [
@@ -345,8 +346,8 @@ fn main() {
             gl::BindTexture(gl::TEXTURE_2D, pieces_texture);
 
             // Use specific shader
-            shader.r#use();
-            shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
+            atlas_shader.r#use();
+            atlas_shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
 
             // Draw elements
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
