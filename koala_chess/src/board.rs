@@ -10,7 +10,7 @@ pub struct Board {
 impl Board {
     pub fn draw(&self) {
         unsafe {
-            // Bind chessboard VBO
+            // Bind board VBO
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vertex_buffer_object);
 
             // Position attribute
@@ -46,7 +46,7 @@ impl Board {
             );
             gl::EnableVertexAttribArray(2);
 
-            // Bind chessboard texture
+            // Bind board texture
             gl::BindTexture(gl::TEXTURE_2D, self.texture);
         }
 

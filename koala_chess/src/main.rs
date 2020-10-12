@@ -117,14 +117,14 @@ fn main() {
     // Initialize OpenGL
     initialize_open_gl(window);
 
-    let chessboard = bitmap::load_bitmap("textures/chessboard.bmp");
-    let pieces = bitmap::load_bitmap("textures/pieces.bmp");
+    let board_bitmap = bitmap::load_bitmap("textures/board.bmp");
+    let pieces_bitmap = bitmap::load_bitmap("textures/pieces.bmp");
 
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
     let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
 
     #[rustfmt::skip]
-    let chessboard_vertices: [f32; 32] = [
+    let board_vertices: [f32; 32] = [
         // positions,    colors,        texture coordinates
          0.8,  0.8, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
          0.8, -0.8, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
@@ -150,7 +150,7 @@ fn main() {
     let mut vertex_buffer_objects: [gl::types::GLuint; 2] = [0; 2];
     let mut element_buffer_object: gl::types::GLuint = 0;
 
-    let mut chessboard_texture: gl::types::GLuint = 0;
+    let mut board_texture: gl::types::GLuint = 0;
     let mut pieces_texture: gl::types::GLuint = 0;
 
     unsafe {
@@ -161,12 +161,12 @@ fn main() {
         // Bind vertex array
         gl::BindVertexArray(vertex_array_object);
 
-        // Chessboard
+        // Board
         gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[0]);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            std::mem::size_of_val(&chessboard_vertices) as gl::types::GLsizeiptr,
-            chessboard_vertices.as_ptr() as *const std::ffi::c_void,
+            std::mem::size_of_val(&board_vertices) as gl::types::GLsizeiptr,
+            board_vertices.as_ptr() as *const std::ffi::c_void,
             gl::STATIC_DRAW,
         );
 
@@ -191,13 +191,13 @@ fn main() {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
-        // Generate chessboard texture
-        gl::GenTextures(1, &mut chessboard_texture);
+        // Generate board texture
+        gl::GenTextures(1, &mut board_texture);
 
-        // Bind chessboard texture
-        gl::BindTexture(gl::TEXTURE_2D, chessboard_texture);
+        // Bind board texture
+        gl::BindTexture(gl::TEXTURE_2D, board_texture);
 
-        // Parameterize chessboard texture
+        // Parameterize board texture
         gl::TexParameteri(
             gl::TEXTURE_2D,
             gl::TEXTURE_MIN_FILTER,
@@ -219,7 +219,7 @@ fn main() {
             gl::CLAMP_TO_EDGE as gl::types::GLint,
         );
 
-        // Setup chessboard texture
+        // Setup board texture
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
@@ -229,7 +229,7 @@ fn main() {
             0,
             gl::BGRA_EXT,
             gl::UNSIGNED_BYTE,
-            chessboard.data.as_ptr() as *const std::ffi::c_void,
+            board_bitmap.data.as_ptr() as *const std::ffi::c_void,
         );
 
         // Generate pieces texture
@@ -270,7 +270,7 @@ fn main() {
             0,
             gl::BGRA_EXT,
             gl::UNSIGNED_BYTE,
-            pieces.data.as_ptr() as *const std::ffi::c_void,
+            pieces_bitmap.data.as_ptr() as *const std::ffi::c_void,
         );
 
         // Generate mipmap
@@ -281,7 +281,7 @@ fn main() {
         shader,
         aspect_ratio: *ASPECT_RATIO.lock().unwrap(),
         vertex_buffer_object: vertex_buffer_objects[0],
-        texture: chessboard_texture,
+        texture: board_texture,
     };
 
     let piece = Piece::new(
