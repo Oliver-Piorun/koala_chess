@@ -1,7 +1,11 @@
 mod bitmap;
+mod board;
+mod piece;
 mod shader;
 
+use board::Board;
 use lazy_static::lazy_static;
+use piece::{Piece, PieceColor, PieceKind};
 use std::{
     ffi::{CString, OsStr},
     io,
@@ -273,6 +277,24 @@ fn main() {
         gl::GenerateMipmap(gl::TEXTURE_2D);
     }
 
+    let board = Board {
+        shader,
+        aspect_ratio: *ASPECT_RATIO.lock().unwrap(),
+        vertex_buffer_object: vertex_buffer_objects[0],
+        texture: chessboard_texture,
+    };
+
+    let piece = Piece::new(
+        PieceColor::Black,
+        PieceKind::Rook,
+        3,
+        3,
+        atlas_shader,
+        *ASPECT_RATIO.lock().unwrap(),
+        vertex_buffer_objects[1],
+        pieces_texture,
+    );
+
     let device_context = unsafe { GetDC(window) };
 
     // The frequency of the performance counter is fixed at system boot and is consistent across all processors
@@ -310,101 +332,11 @@ fn main() {
             // Clear the viewport with the clear color
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            // Bind chessboard VBO
-            gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[0]);
+            // Draw board
+            board.draw();
 
-            // Position attribute
-            gl::VertexAttribPointer(
-                0,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                std::ptr::null::<std::ffi::c_void>(),
-            );
-            gl::EnableVertexAttribArray(0);
-
-            // Color attribute
-            gl::VertexAttribPointer(
-                1,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                12 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(1);
-
-            // Texture coordinates attribute
-            gl::VertexAttribPointer(
-                2,
-                2,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                24 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(2);
-
-            // Bind chessboard texture
-            gl::BindTexture(gl::TEXTURE_2D, chessboard_texture);
-
-            // Use specific shader
-            shader.r#use();
-            shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
-
-            // Draw elements
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
-
-            // Bind pieces VBO
-            gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[1]);
-
-            // Position attribute
-            gl::VertexAttribPointer(
-                0,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                std::ptr::null::<std::ffi::c_void>(),
-            );
-            gl::EnableVertexAttribArray(0);
-
-            // Color attribute
-            gl::VertexAttribPointer(
-                1,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                12 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(1);
-
-            // Texture coordinates attribute
-            gl::VertexAttribPointer(
-                2,
-                2,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                24 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(2);
-
-            // Bind pieces texture
-            gl::BindTexture(gl::TEXTURE_2D, pieces_texture);
-
-            // Use specific shader
-            atlas_shader.r#use();
-            atlas_shader.set_float("tile_x\0", 3.0);
-            atlas_shader.set_float("tile_y\0", 3.0);
-            atlas_shader.set_float("piece_x\0", 2.0);
-            atlas_shader.set_float("piece_y\0", 1.0);
-            atlas_shader.set_float("aspect_ratio\0", *ASPECT_RATIO.lock().unwrap());
-
-            // Draw elements
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+            // Draw piece
+            piece.draw();
 
             SwapBuffers(device_context);
         }
