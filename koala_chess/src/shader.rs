@@ -8,10 +8,10 @@ pub struct Shader {
 impl Shader {
     pub fn new(vertex_shader_path: &str, fragment_shader_path: &str) -> Shader {
         let mut vertex_shader_code = read_to_string(vertex_shader_path).unwrap();
-        vertex_shader_code.push_str("\0");
+        vertex_shader_code.push('\0');
 
         let mut fragment_shader_code = read_to_string(fragment_shader_path).unwrap();
-        fragment_shader_code.push_str("\0");
+        fragment_shader_code.push('\0');
 
         unsafe {
             // Vertex shader
