@@ -1,12 +1,14 @@
 mod bitmap;
 mod board;
+mod game;
 mod piece;
 mod shader;
 mod traits;
 
 use board::Board;
+use game::Game;
 use lazy_static::lazy_static;
-use piece::{Piece, PieceColor, PieceKind};
+use piece::Piece;
 use std::{
     ffi::{CString, OsStr},
     io,
@@ -147,7 +149,7 @@ fn main() {
 
         // Bind element buffer object
         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
-        
+
         // Set element buffer object data
         gl::BufferData(
             gl::ELEMENT_ARRAY_BUFFER,
@@ -165,28 +167,7 @@ fn main() {
         gl::GenerateMipmap(gl::TEXTURE_2D);
     }
 
-    let board = Board {
-        shader,
-        aspect_ratio: *ASPECT_RATIO.lock().unwrap(),
-    };
-
-    let piece_a = Piece::new(
-        PieceColor::Black,
-        PieceKind::Rook,
-        3,
-        3,
-        atlas_shader,
-        *ASPECT_RATIO.lock().unwrap(),
-    );
-
-    let piece_b = Piece::new(
-        PieceColor::White,
-        PieceKind::Rook,
-        2,
-        2,
-        atlas_shader,
-        *ASPECT_RATIO.lock().unwrap(),
-    );
+    let game = Game::new(shader, atlas_shader, *ASPECT_RATIO.lock().unwrap());
 
     let device_context = unsafe { GetDC(window) };
 
@@ -225,12 +206,8 @@ fn main() {
             // Clear the viewport with the clear color
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            // Draw board
-            board.draw();
-
-            // Draw pieces
-            piece_a.draw();
-            piece_b.draw();
+            // Draw game
+            game.draw();
 
             SwapBuffers(device_context);
         }
