@@ -2,6 +2,7 @@ mod bitmap;
 mod board;
 mod piece;
 mod shader;
+mod traits;
 
 use board::Board;
 use lazy_static::lazy_static;
@@ -15,6 +16,7 @@ use std::{
         Mutex,
     },
 };
+use traits::Draw;
 use winapi::{
     shared::{
         minwindef::{ATOM, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},

@@ -1,4 +1,4 @@
-use crate::shader::Shader;
+use crate::{shader::Shader, traits::Draw};
 
 pub enum PieceColor {
     White,
@@ -66,8 +66,10 @@ impl Piece {
             piece_y,
         }
     }
+}
 
-    pub fn draw(&self) {
+impl Draw for Piece {
+    fn draw(&self) {
         unsafe {
             // Bind pieces VBO
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vertex_buffer_object);

@@ -1,4 +1,5 @@
 use crate::shader::Shader;
+use crate::traits::Draw;
 
 pub struct Board {
     pub shader: Shader,
@@ -7,8 +8,8 @@ pub struct Board {
     pub texture: gl::types::GLuint,
 }
 
-impl Board {
-    pub fn draw(&self) {
+impl Draw for Board {
+    fn draw(&self) {
         unsafe {
             // Bind board VBO
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vertex_buffer_object);
