@@ -103,12 +103,12 @@ impl Piece {
             gl::TexParameteri(
                 gl::TEXTURE_2D,
                 gl::TEXTURE_MIN_FILTER,
-                gl::NEAREST as gl::types::GLint,
+                gl::LINEAR as gl::types::GLint,
             );
             gl::TexParameteri(
                 gl::TEXTURE_2D,
                 gl::TEXTURE_MAG_FILTER,
-                gl::NEAREST as gl::types::GLint,
+                gl::LINEAR as gl::types::GLint,
             );
             gl::TexParameteri(
                 gl::TEXTURE_2D,
