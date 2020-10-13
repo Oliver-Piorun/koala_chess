@@ -86,7 +86,7 @@ impl Board {
 impl Draw for Board {
     fn draw(&self) {
         unsafe {
-            // Bind VBO
+            // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
 
             // Position attribute

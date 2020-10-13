@@ -119,28 +119,36 @@ fn main() {
     // Initialize OpenGL
     initialize_open_gl(window);
 
+    // Load bitmaps
     let board_bitmap = bitmap::load_bitmap("textures/board.bmp");
     let pieces_bitmap = bitmap::load_bitmap("textures/pieces.bmp");
 
+    // Create shaders
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
     let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
+
+    let mut vertex_array_object: gl::types::GLuint = 0;
+    let mut element_buffer_object: gl::types::GLuint = 0;
 
     let indices: [u32; 6] = [
         0, 1, 3, // first triangle
         1, 2, 3, // second triangle
     ];
 
-    let mut vertex_array_object: gl::types::GLuint = 0;
-    let mut element_buffer_object: gl::types::GLuint = 0;
-
     unsafe {
+        // Generate vertex array object
         gl::GenVertexArrays(1, &mut vertex_array_object);
-        gl::GenBuffers(1, &mut element_buffer_object);
 
-        // Bind vertex array
+        // Bind vertex array object
         gl::BindVertexArray(vertex_array_object);
 
+        // Generate element buffer object
+        gl::GenBuffers(1, &mut element_buffer_object);
+
+        // Bind element buffer object
         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
+        
+        // Set element buffer object data
         gl::BufferData(
             gl::ELEMENT_ARRAY_BUFFER,
             std::mem::size_of_val(&indices) as gl::types::GLsizeiptr,
