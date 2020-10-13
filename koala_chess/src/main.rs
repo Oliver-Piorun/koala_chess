@@ -149,8 +149,8 @@ fn main() {
         );
     }
 
-    let (board_vertex_buffer_object, board_texture) = Board::initialize(&board_bitmap);
-    let (piece_vertex_buffer_object, pieces_texture) = Piece::initialize(&pieces_bitmap);
+    Board::initialize(&board_bitmap);
+    Piece::initialize(&pieces_bitmap);
 
     unsafe {
         // Generate mipmap
@@ -160,8 +160,6 @@ fn main() {
     let board = Board {
         shader,
         aspect_ratio: *ASPECT_RATIO.lock().unwrap(),
-        vertex_buffer_object: board_vertex_buffer_object,
-        texture: board_texture,
     };
 
     let piece_a = Piece::new(
@@ -171,8 +169,6 @@ fn main() {
         3,
         atlas_shader,
         *ASPECT_RATIO.lock().unwrap(),
-        piece_vertex_buffer_object,
-        pieces_texture,
     );
 
     let piece_b = Piece::new(
@@ -182,8 +178,6 @@ fn main() {
         2,
         atlas_shader,
         *ASPECT_RATIO.lock().unwrap(),
-        piece_vertex_buffer_object,
-        pieces_texture,
     );
 
     let device_context = unsafe { GetDC(window) };

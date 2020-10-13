@@ -1,15 +1,16 @@
 use crate::traits::Draw;
 use crate::{bitmap::Bitmap, shader::Shader};
 
+static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
+static mut TEXTURE: gl::types::GLuint = 0;
+
 pub struct Board {
     pub shader: Shader,
     pub aspect_ratio: f32,
-    pub vertex_buffer_object: gl::types::GLuint,
-    pub texture: gl::types::GLuint,
 }
 
 impl Board {
-    pub fn initialize(bitmap: &Bitmap) -> (gl::types::GLuint, gl::types::GLuint) {
+    pub fn initialize(bitmap: &Bitmap) {
         #[rustfmt::skip]
         let board_vertices: [f32; 32] = [
             // positions,    colors,        texture coordinates
@@ -19,15 +20,12 @@ impl Board {
             -0.8,  0.8, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
         ];
 
-        let mut vertex_buffer_object: gl::types::GLuint = 0;
-        let mut texture: gl::types::GLuint = 0;
-
         unsafe {
             // Generate vertex buffer object
-            gl::GenBuffers(1, &mut vertex_buffer_object);
+            gl::GenBuffers(1, &mut VERTEX_BUFFER_OBJECT);
 
             // Bind vertex buffer object
-            gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_object);
+            gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
 
             // Set vertex buffer object data
             gl::BufferData(
@@ -42,10 +40,10 @@ impl Board {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
             // Generate texture
-            gl::GenTextures(1, &mut texture);
+            gl::GenTextures(1, &mut TEXTURE);
 
             // Bind texture
-            gl::BindTexture(gl::TEXTURE_2D, texture);
+            gl::BindTexture(gl::TEXTURE_2D, TEXTURE);
 
             // Parameterize texture
             gl::TexParameteri(
@@ -82,8 +80,6 @@ impl Board {
                 bitmap.data.as_ptr() as *const std::ffi::c_void,
             );
         }
-
-        (vertex_buffer_object, texture)
     }
 }
 
@@ -91,7 +87,7 @@ impl Draw for Board {
     fn draw(&self) {
         unsafe {
             // Bind VBO
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vertex_buffer_object);
+            gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
 
             // Position attribute
             gl::VertexAttribPointer(
@@ -127,7 +123,7 @@ impl Draw for Board {
             gl::EnableVertexAttribArray(2);
 
             // Bind texture
-            gl::BindTexture(gl::TEXTURE_2D, self.texture);
+            gl::BindTexture(gl::TEXTURE_2D, TEXTURE);
         }
 
         // Use specific shader
