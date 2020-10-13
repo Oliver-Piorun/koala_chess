@@ -125,52 +125,20 @@ fn main() {
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
     let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
 
-    #[rustfmt::skip]
-    let board_vertices: [f32; 32] = [
-        // positions,    colors,        texture coordinates
-         0.8,  0.8, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-         0.8, -0.8, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-        -0.8, -0.8, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-        -0.8,  0.8, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
-    ];
-
-    #[rustfmt::skip]
-    let pieces_vertices: [f32; 32] = [
-        // positions,    colors,        texture coordinates
-         1.0,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-         1.0, -1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-        -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-        -1.0,  1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
-    ];
-
     let indices: [u32; 6] = [
         0, 1, 3, // first triangle
         1, 2, 3, // second triangle
     ];
 
     let mut vertex_array_object: gl::types::GLuint = 0;
-    let mut vertex_buffer_objects: [gl::types::GLuint; 2] = [0; 2];
     let mut element_buffer_object: gl::types::GLuint = 0;
-
-    let mut board_texture: gl::types::GLuint = 0;
-    let mut pieces_texture: gl::types::GLuint = 0;
 
     unsafe {
         gl::GenVertexArrays(1, &mut vertex_array_object);
-        gl::GenBuffers(2, &mut vertex_buffer_objects[0]);
         gl::GenBuffers(1, &mut element_buffer_object);
 
         // Bind vertex array
         gl::BindVertexArray(vertex_array_object);
-
-        // Board
-        gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[0]);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            std::mem::size_of_val(&board_vertices) as gl::types::GLsizeiptr,
-            board_vertices.as_ptr() as *const std::ffi::c_void,
-            gl::STATIC_DRAW,
-        );
 
         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
         gl::BufferData(
@@ -179,102 +147,12 @@ fn main() {
             indices.as_ptr() as *const std::ffi::c_void,
             gl::STATIC_DRAW,
         );
+    }
 
-        // Pieces
-        gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_objects[1]);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            std::mem::size_of_val(&pieces_vertices) as gl::types::GLsizeiptr,
-            pieces_vertices.as_ptr() as *const std::ffi::c_void,
-            gl::STATIC_DRAW,
-        );
+    let (board_vertex_buffer_object, board_texture) = Board::initialize(&board_bitmap);
+    let (piece_vertex_buffer_object, pieces_texture) = Piece::initialize(&pieces_bitmap);
 
-        gl::Enable(gl::TEXTURE_2D);
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-
-        // Generate board texture
-        gl::GenTextures(1, &mut board_texture);
-
-        // Bind board texture
-        gl::BindTexture(gl::TEXTURE_2D, board_texture);
-
-        // Parameterize board texture
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_MIN_FILTER,
-            gl::NEAREST as gl::types::GLint,
-        );
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_MAG_FILTER,
-            gl::NEAREST as gl::types::GLint,
-        );
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_WRAP_S,
-            gl::CLAMP_TO_EDGE as gl::types::GLint,
-        );
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_WRAP_T,
-            gl::CLAMP_TO_EDGE as gl::types::GLint,
-        );
-
-        // Setup board texture
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGBA8 as gl::types::GLint,
-            2048,
-            2048,
-            0,
-            gl::BGRA_EXT,
-            gl::UNSIGNED_BYTE,
-            board_bitmap.data.as_ptr() as *const std::ffi::c_void,
-        );
-
-        // Generate pieces texture
-        gl::GenTextures(1, &mut pieces_texture);
-
-        // Bind pieces texture
-        gl::BindTexture(gl::TEXTURE_2D, pieces_texture);
-
-        // Parameterize pieces texture
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_MIN_FILTER,
-            gl::NEAREST as gl::types::GLint,
-        );
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_MAG_FILTER,
-            gl::NEAREST as gl::types::GLint,
-        );
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_WRAP_S,
-            gl::CLAMP_TO_EDGE as gl::types::GLint,
-        );
-        gl::TexParameteri(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_WRAP_T,
-            gl::CLAMP_TO_EDGE as gl::types::GLint,
-        );
-
-        // Setup pieces texture
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGBA8 as gl::types::GLint,
-            1024,
-            1024,
-            0,
-            gl::BGRA_EXT,
-            gl::UNSIGNED_BYTE,
-            pieces_bitmap.data.as_ptr() as *const std::ffi::c_void,
-        );
-
+    unsafe {
         // Generate mipmap
         gl::GenerateMipmap(gl::TEXTURE_2D);
     }
@@ -282,18 +160,29 @@ fn main() {
     let board = Board {
         shader,
         aspect_ratio: *ASPECT_RATIO.lock().unwrap(),
-        vertex_buffer_object: vertex_buffer_objects[0],
+        vertex_buffer_object: board_vertex_buffer_object,
         texture: board_texture,
     };
 
-    let piece = Piece::new(
+    let piece_a = Piece::new(
         PieceColor::Black,
         PieceKind::Rook,
         3,
         3,
         atlas_shader,
         *ASPECT_RATIO.lock().unwrap(),
-        vertex_buffer_objects[1],
+        piece_vertex_buffer_object,
+        pieces_texture,
+    );
+
+    let piece_b = Piece::new(
+        PieceColor::White,
+        PieceKind::Rook,
+        2,
+        2,
+        atlas_shader,
+        *ASPECT_RATIO.lock().unwrap(),
+        piece_vertex_buffer_object,
         pieces_texture,
     );
 
@@ -337,8 +226,9 @@ fn main() {
             // Draw board
             board.draw();
 
-            // Draw piece
-            piece.draw();
+            // Draw pieces
+            piece_a.draw();
+            piece_b.draw();
 
             SwapBuffers(device_context);
         }

@@ -1,4 +1,4 @@
-use crate::{shader::Shader, traits::Draw};
+use crate::{bitmap::Bitmap, shader::Shader, traits::Draw};
 
 pub enum PieceColor {
     White,
@@ -66,12 +66,89 @@ impl Piece {
             piece_y,
         }
     }
+
+    pub fn initialize(bitmap: &Bitmap) -> (gl::types::GLuint, gl::types::GLuint) {
+        #[rustfmt::skip]
+        let pieces_vertices: [f32; 32] = [
+            // positions,    colors,        texture coordinates
+             1.0,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
+             1.0, -1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
+            -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
+            -1.0,  1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+        ];
+
+        let mut vertex_buffer_object: gl::types::GLuint = 0;
+        let mut texture: gl::types::GLuint = 0;
+
+        unsafe {
+            // Generate vertex buffer object
+            gl::GenBuffers(1, &mut vertex_buffer_object);
+
+            // Bind vertex buffer object
+            gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_object);
+
+            // Set vertex buffer object data
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                std::mem::size_of_val(&pieces_vertices) as gl::types::GLsizeiptr,
+                pieces_vertices.as_ptr() as *const std::ffi::c_void,
+                gl::STATIC_DRAW,
+            );
+
+            gl::Enable(gl::TEXTURE_2D);
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+
+            // Generate texture
+            gl::GenTextures(1, &mut texture);
+
+            // Bind texture
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+
+            // Parameterize texture
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MIN_FILTER,
+                gl::NEAREST as gl::types::GLint,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MAG_FILTER,
+                gl::NEAREST as gl::types::GLint,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_S,
+                gl::CLAMP_TO_EDGE as gl::types::GLint,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_T,
+                gl::CLAMP_TO_EDGE as gl::types::GLint,
+            );
+
+            // Setup texture
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGBA8 as gl::types::GLint,
+                1024,
+                1024,
+                0,
+                gl::BGRA_EXT,
+                gl::UNSIGNED_BYTE,
+                bitmap.data.as_ptr() as *const std::ffi::c_void,
+            );
+        }
+
+        (vertex_buffer_object, texture)
+    }
 }
 
 impl Draw for Piece {
     fn draw(&self) {
         unsafe {
-            // Bind pieces VBO
+            // Bind VBO
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vertex_buffer_object);
 
             // Position attribute
@@ -107,7 +184,7 @@ impl Draw for Piece {
             );
             gl::EnableVertexAttribArray(2);
 
-            // Bind pieces texture
+            // Bind texture
             gl::BindTexture(gl::TEXTURE_2D, self.texture);
         }
 

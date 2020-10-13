@@ -1,5 +1,6 @@
 use std::fs::read_to_string;
 
+#[derive(Copy, Clone)]
 pub struct Shader {
     program: gl::types::GLuint,
 }
