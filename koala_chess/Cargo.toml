@@ -12,3 +12,6 @@ lazy_static = "1.4.0"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "profileapi", "impl-default"] }
+
+[target.'cfg(unix)'.dependencies]
+x11 = { version = "2.18.2" }
