@@ -67,10 +67,11 @@ impl Piece {
     }
 
     pub fn initialize() {
+        // Load bitmap
         let bitmap = bitmap::load_bitmap("textures/pieces.bmp");
 
         #[rustfmt::skip]
-        let pieces_vertices: [f32; 32] = [
+        let vertices: [f32; 32] = [
             // positions,    colors,        texture coordinates
              1.0,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
              1.0, -1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
@@ -88,8 +89,8 @@ impl Piece {
             // Set vertex buffer object data
             gl::BufferData(
                 gl::ARRAY_BUFFER,
-                std::mem::size_of_val(&pieces_vertices) as gl::types::GLsizeiptr,
-                pieces_vertices.as_ptr() as *const std::ffi::c_void,
+                std::mem::size_of_val(&vertices) as gl::types::GLsizeiptr,
+                vertices.as_ptr() as *const std::ffi::c_void,
                 gl::STATIC_DRAW,
             );
 

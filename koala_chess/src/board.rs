@@ -12,10 +12,11 @@ pub struct Board {
 
 impl Board {
     pub fn initialize() {
+        // Load bitmap
         let bitmap = bitmap::load_bitmap("textures/board.bmp");
 
         #[rustfmt::skip]
-        let board_vertices: [f32; 32] = [
+        let vertices: [f32; 32] = [
             // positions,    colors,        texture coordinates
              0.8,  0.8, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
              0.8, -0.8, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
@@ -33,8 +34,8 @@ impl Board {
             // Set vertex buffer object data
             gl::BufferData(
                 gl::ARRAY_BUFFER,
-                std::mem::size_of_val(&board_vertices) as gl::types::GLsizeiptr,
-                board_vertices.as_ptr() as *const std::ffi::c_void,
+                std::mem::size_of_val(&vertices) as gl::types::GLsizeiptr,
+                vertices.as_ptr() as *const std::ffi::c_void,
                 gl::STATIC_DRAW,
             );
 
