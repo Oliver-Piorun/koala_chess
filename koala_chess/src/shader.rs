@@ -72,6 +72,7 @@ impl Shader {
         };
 
         if uniform_location == -1 {
+            // TODO: Error handling
             eprintln!(
                 "Could not get uniform location! (name: {}, value: {})",
                 name, value
