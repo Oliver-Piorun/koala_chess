@@ -1,17 +1,24 @@
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+
 use crate::bitmap;
 use crate::shader::Shader;
 use crate::traits::Draw;
 
+lazy_static! {
+    static ref SHADER: Mutex<Option<Shader>> = Mutex::new(None);
+}
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
 pub struct Board {
-    pub shader: Shader,
     pub aspect_ratio: f32,
 }
 
 impl Board {
-    pub fn initialize() {
+    pub fn initialize(shader: Shader) {
+        *SHADER.lock().unwrap() = Some(shader);
+
         // Load bitmap
         let bitmap = bitmap::load_bitmap("textures/board.bmp");
 
@@ -131,8 +138,9 @@ impl Draw for Board {
         }
 
         // Use specific shader
-        self.shader.r#use();
-        self.shader.set_float("aspect_ratio\0", self.aspect_ratio);
+        let shader = SHADER.lock().unwrap().unwrap();
+        shader.r#use();
+        shader.set_float("aspect_ratio\0", self.aspect_ratio);
 
         // Draw elements
         unsafe {

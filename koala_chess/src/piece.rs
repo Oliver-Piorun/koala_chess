@@ -1,3 +1,6 @@
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+
 use crate::bitmap;
 use crate::shader::Shader;
 use crate::traits::Draw;
@@ -16,6 +19,9 @@ pub enum PieceKind {
     King,
 }
 
+lazy_static! {
+    static ref ATLAS_SHADER: Mutex<Option<Shader>> = Mutex::new(None);
+}
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
@@ -24,7 +30,6 @@ pub struct Piece {
     pub kind: PieceKind,
     pub board_x: u8,
     pub board_y: u8,
-    pub atlas_shader: Shader,
     pub aspect_ratio: f32,
     piece_x: u8,
     piece_y: u8,
@@ -36,7 +41,6 @@ impl Piece {
         kind: PieceKind,
         board_x: u8,
         board_y: u8,
-        atlas_shader: Shader,
         aspect_ratio: f32,
     ) -> Piece {
         let (piece_x, piece_y) = match (&color, &kind) {
@@ -59,14 +63,15 @@ impl Piece {
             kind,
             board_x,
             board_y,
-            atlas_shader,
             aspect_ratio,
             piece_x,
             piece_y,
         }
     }
 
-    pub fn initialize() {
+    pub fn initialize(atlas_shader: Shader) {
+        *ATLAS_SHADER.lock().unwrap() = Some(atlas_shader);
+
         // Load bitmap
         let bitmap = bitmap::load_bitmap("textures/pieces.bmp");
 
@@ -186,17 +191,13 @@ impl Draw for Piece {
         }
 
         // Use specific shader
-        self.atlas_shader.r#use();
-        self.atlas_shader
-            .set_float("board_x\0", self.board_x as gl::types::GLfloat);
-        self.atlas_shader
-            .set_float("board_y\0", self.board_y as gl::types::GLfloat);
-        self.atlas_shader
-            .set_float("piece_x\0", self.piece_x as gl::types::GLfloat);
-        self.atlas_shader
-            .set_float("piece_y\0", self.piece_y as gl::types::GLfloat);
-        self.atlas_shader
-            .set_float("aspect_ratio\0", self.aspect_ratio);
+        let atlas_shader = ATLAS_SHADER.lock().unwrap().unwrap();
+        atlas_shader.r#use();
+        atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat);
+        atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat);
+        atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat);
+        atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat);
+        atlas_shader.set_float("aspect_ratio\0", self.aspect_ratio);
 
         // Draw elements
         unsafe {

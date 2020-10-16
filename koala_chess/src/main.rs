@@ -155,15 +155,15 @@ fn main() {
         );
     }
 
-    Board::initialize();
-    Piece::initialize();
+    Board::initialize(shader);
+    Piece::initialize(atlas_shader);
 
     unsafe {
         // Generate mipmap
         gl::GenerateMipmap(gl::TEXTURE_2D);
     }
 
-    let game = Game::new(shader, atlas_shader, *ASPECT_RATIO.lock().unwrap());
+    let game = Game::new(*ASPECT_RATIO.lock().unwrap());
 
     let device_context = unsafe { GetDC(window) };
 
