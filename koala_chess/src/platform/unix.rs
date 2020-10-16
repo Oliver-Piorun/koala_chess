@@ -1,3 +1,3 @@
 pub fn create_window() {
-    printf!("Unix!");
+    println!("Unix!");
 }
