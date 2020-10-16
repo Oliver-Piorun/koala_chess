@@ -1,4 +1,6 @@
-use crate::{bitmap::Bitmap, shader::Shader, traits::Draw};
+use crate::bitmap;
+use crate::shader::Shader;
+use crate::traits::Draw;
 
 pub enum PieceColor {
     White,
@@ -64,7 +66,9 @@ impl Piece {
         }
     }
 
-    pub fn initialize(bitmap: &Bitmap) {
+    pub fn initialize() {
+        let bitmap = bitmap::load_bitmap("textures/pieces.bmp");
+
         #[rustfmt::skip]
         let pieces_vertices: [f32; 32] = [
             // positions,    colors,        texture coordinates

@@ -1,5 +1,6 @@
+use crate::bitmap;
+use crate::shader::Shader;
 use crate::traits::Draw;
-use crate::{bitmap::Bitmap, shader::Shader};
 
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
@@ -10,7 +11,9 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn initialize(bitmap: &Bitmap) {
+    pub fn initialize() {
+        let bitmap = bitmap::load_bitmap("textures/board.bmp");
+
         #[rustfmt::skip]
         let board_vertices: [f32; 32] = [
             // positions,    colors,        texture coordinates

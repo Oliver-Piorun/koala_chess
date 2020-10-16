@@ -121,10 +121,6 @@ fn main() {
     // Initialize OpenGL
     initialize_open_gl(window);
 
-    // Load bitmaps
-    let board_bitmap = bitmap::load_bitmap("textures/board.bmp");
-    let pieces_bitmap = bitmap::load_bitmap("textures/pieces.bmp");
-
     // Create shaders
     let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
     let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
@@ -159,8 +155,8 @@ fn main() {
         );
     }
 
-    Board::initialize(&board_bitmap);
-    Piece::initialize(&pieces_bitmap);
+    Board::initialize();
+    Piece::initialize();
 
     unsafe {
         // Generate mipmap
