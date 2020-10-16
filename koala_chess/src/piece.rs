@@ -30,19 +30,12 @@ pub struct Piece {
     pub kind: PieceKind,
     pub board_x: u8,
     pub board_y: u8,
-    pub aspect_ratio: f32,
     piece_x: u8,
     piece_y: u8,
 }
 
 impl Piece {
-    pub fn new(
-        color: PieceColor,
-        kind: PieceKind,
-        board_x: u8,
-        board_y: u8,
-        aspect_ratio: f32,
-    ) -> Piece {
+    pub fn new(color: PieceColor, kind: PieceKind, board_x: u8, board_y: u8) -> Piece {
         let (piece_x, piece_y) = match (&color, &kind) {
             (PieceColor::White, PieceKind::Pawn) => (0, 2),
             (PieceColor::White, PieceKind::Knight) => (2, 2),
@@ -63,7 +56,6 @@ impl Piece {
             kind,
             board_x,
             board_y,
-            aspect_ratio,
             piece_x,
             piece_y,
         }
@@ -148,7 +140,7 @@ impl Piece {
 }
 
 impl Draw for Piece {
-    fn draw(&self) {
+    fn draw(&self, aspect_ratio: f32) {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -197,7 +189,7 @@ impl Draw for Piece {
         atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat);
         atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat);
         atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat);
-        atlas_shader.set_float("aspect_ratio\0", self.aspect_ratio);
+        atlas_shader.set_float("aspect_ratio\0", aspect_ratio);
 
         // Draw elements
         unsafe {

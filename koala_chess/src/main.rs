@@ -120,7 +120,7 @@ fn main() {
     initialize_open_gl(window);
 
     Game::initialize();
-    let game = Game::new(*ASPECT_RATIO.lock().unwrap());
+    let game = Game::new();
 
     let device_context = unsafe { GetDC(window) };
 
@@ -160,7 +160,7 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             // Draw game
-            game.draw();
+            game.draw(*ASPECT_RATIO.lock().unwrap());
 
             SwapBuffers(device_context);
         }

@@ -8,58 +8,58 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(aspect_ratio: f32) -> Game {
-        let board = Board { aspect_ratio };
+    pub fn new() -> Game {
+        let board = Board;
 
         let mut pieces: Vec<Piece> = Vec::new();
 
         // Create pieces
         for board_x in 0..8 {
             #[rustfmt::skip]
-            let white_pawn = Piece::new(PieceColor::White, PieceKind::Pawn, board_x, 1, aspect_ratio);
+            let white_pawn = Piece::new(PieceColor::White, PieceKind::Pawn, board_x, 1);
             #[rustfmt::skip]
-            let black_pawn = Piece::new(PieceColor::Black, PieceKind::Pawn, board_x, 6, aspect_ratio);
+            let black_pawn = Piece::new(PieceColor::Black, PieceKind::Pawn, board_x, 6);
 
             pieces.push(white_pawn);
             pieces.push(black_pawn);
         }
 
         #[rustfmt::skip]
-        let left_white_rook = Piece::new(PieceColor::White, PieceKind::Rook, 0, 0, aspect_ratio);
+        let left_white_rook = Piece::new(PieceColor::White, PieceKind::Rook, 0, 0);
         #[rustfmt::skip]
-        let right_white_rook = Piece::new(PieceColor::White, PieceKind::Rook, 7, 0, aspect_ratio);
+        let right_white_rook = Piece::new(PieceColor::White, PieceKind::Rook, 7, 0);
         #[rustfmt::skip]
-        let left_black_rook = Piece::new(PieceColor::Black, PieceKind::Rook, 0, 7, aspect_ratio);
+        let left_black_rook = Piece::new(PieceColor::Black, PieceKind::Rook, 0, 7);
         #[rustfmt::skip]
-        let right_black_rook = Piece::new(PieceColor::Black, PieceKind::Rook, 7, 7, aspect_ratio);
+        let right_black_rook = Piece::new(PieceColor::Black, PieceKind::Rook, 7, 7);
 
         #[rustfmt::skip]
-        let left_white_knight = Piece::new(PieceColor::White, PieceKind::Knight, 1, 0, aspect_ratio);
+        let left_white_knight = Piece::new(PieceColor::White, PieceKind::Knight, 1, 0);
         #[rustfmt::skip]
-        let right_white_knight = Piece::new(PieceColor::White, PieceKind::Knight, 6, 0, aspect_ratio);
+        let right_white_knight = Piece::new(PieceColor::White, PieceKind::Knight, 6, 0);
         #[rustfmt::skip]
-        let left_black_knight = Piece::new(PieceColor::Black, PieceKind::Knight, 1, 7, aspect_ratio);
+        let left_black_knight = Piece::new(PieceColor::Black, PieceKind::Knight, 1, 7);
         #[rustfmt::skip]
-        let right_black_knight = Piece::new(PieceColor::Black, PieceKind::Knight, 6, 7, aspect_ratio);
+        let right_black_knight = Piece::new(PieceColor::Black, PieceKind::Knight, 6, 7);
 
         #[rustfmt::skip]
-        let left_white_bishop = Piece::new(PieceColor::White, PieceKind::Bishop, 2, 0, aspect_ratio);
+        let left_white_bishop = Piece::new(PieceColor::White, PieceKind::Bishop, 2, 0);
         #[rustfmt::skip]
-        let right_white_bishop = Piece::new(PieceColor::White, PieceKind::Bishop, 5, 0, aspect_ratio);
+        let right_white_bishop = Piece::new(PieceColor::White, PieceKind::Bishop, 5, 0);
         #[rustfmt::skip]
-        let left_black_bishop = Piece::new(PieceColor::Black, PieceKind::Bishop, 2, 7, aspect_ratio);
+        let left_black_bishop = Piece::new(PieceColor::Black, PieceKind::Bishop, 2, 7);
         #[rustfmt::skip]
-        let right_black_bishop = Piece::new(PieceColor::Black, PieceKind::Bishop, 5, 7, aspect_ratio);
+        let right_black_bishop = Piece::new(PieceColor::Black, PieceKind::Bishop, 5, 7);
 
         #[rustfmt::skip]
-        let white_queen = Piece::new(PieceColor::White, PieceKind::Queen, 3, 0, aspect_ratio);
+        let white_queen = Piece::new(PieceColor::White, PieceKind::Queen, 3, 0);
         #[rustfmt::skip]
-        let black_queen = Piece::new(PieceColor::Black, PieceKind::Queen, 3, 7, aspect_ratio);
+        let black_queen = Piece::new(PieceColor::Black, PieceKind::Queen, 3, 7);
 
         #[rustfmt::skip]
-        let white_king = Piece::new(PieceColor::White, PieceKind::King, 4, 0, aspect_ratio);
+        let white_king = Piece::new(PieceColor::White, PieceKind::King, 4, 0);
         #[rustfmt::skip]
-        let black_king = Piece::new(PieceColor::Black, PieceKind::King, 4, 7, aspect_ratio);
+        let black_king = Piece::new(PieceColor::Black, PieceKind::King, 4, 7);
 
         pieces.push(left_white_rook);
         pieces.push(right_white_rook);
@@ -127,11 +127,11 @@ impl Game {
 }
 
 impl Draw for Game {
-    fn draw(&self) {
-        self.board.draw();
+    fn draw(&self, aspect_ratio: f32) {
+        self.board.draw(aspect_ratio);
 
         for piece in self.pieces.iter() {
-            piece.draw();
+            piece.draw(aspect_ratio);
         }
     }
 }

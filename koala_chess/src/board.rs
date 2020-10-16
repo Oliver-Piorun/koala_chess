@@ -11,9 +11,7 @@ lazy_static! {
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
-pub struct Board {
-    pub aspect_ratio: f32,
-}
+pub struct Board;
 
 impl Board {
     pub fn initialize(shader: Shader) {
@@ -95,7 +93,7 @@ impl Board {
 }
 
 impl Draw for Board {
-    fn draw(&self) {
+    fn draw(&self, aspect_ratio: f32) {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -140,7 +138,7 @@ impl Draw for Board {
         // Use specific shader
         let shader = SHADER.lock().unwrap().unwrap();
         shader.r#use();
-        shader.set_float("aspect_ratio\0", self.aspect_ratio);
+        shader.set_float("aspect_ratio\0", aspect_ratio);
 
         // Draw elements
         unsafe {
