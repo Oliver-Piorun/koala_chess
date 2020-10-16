@@ -5,10 +5,8 @@ mod piece;
 mod shader;
 mod traits;
 
-use board::Board;
 use game::Game;
 use lazy_static::lazy_static;
-use piece::Piece;
 use std::{
     ffi::{CString, OsStr},
     io,
@@ -121,48 +119,7 @@ fn main() {
     // Initialize OpenGL
     initialize_open_gl(window);
 
-    // Create shaders
-    let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
-    let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
-
-    let mut vertex_array_object: gl::types::GLuint = 0;
-    let mut element_buffer_object: gl::types::GLuint = 0;
-
-    let indices: [u32; 6] = [
-        0, 1, 3, // first triangle
-        1, 2, 3, // second triangle
-    ];
-
-    unsafe {
-        // Generate vertex array object
-        gl::GenVertexArrays(1, &mut vertex_array_object);
-
-        // Bind vertex array object
-        gl::BindVertexArray(vertex_array_object);
-
-        // Generate element buffer object
-        gl::GenBuffers(1, &mut element_buffer_object);
-
-        // Bind element buffer object
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer_object);
-
-        // Set element buffer object data
-        gl::BufferData(
-            gl::ELEMENT_ARRAY_BUFFER,
-            std::mem::size_of_val(&indices) as gl::types::GLsizeiptr,
-            indices.as_ptr() as *const std::ffi::c_void,
-            gl::STATIC_DRAW,
-        );
-    }
-
-    Board::initialize(shader);
-    Piece::initialize(atlas_shader);
-
-    unsafe {
-        // Generate mipmap
-        gl::GenerateMipmap(gl::TEXTURE_2D);
-    }
-
+    Game::initialize();
     let game = Game::new(*ASPECT_RATIO.lock().unwrap());
 
     let device_context = unsafe { GetDC(window) };
