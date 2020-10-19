@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "gl",
+    "glx",
     "koala_chess"
 ]
