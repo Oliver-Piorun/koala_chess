@@ -10,6 +10,19 @@ pub fn create_window() {
         return;
     }
 
+    let mut major_glx: glx::types::GLint = 0;
+    let mut minor_glx: glx::types::GLint = 0;
+
+    unsafe {
+        glx::QueryVersion(
+            display as *mut glx::types::Display,
+            &mut major_glx,
+            &mut minor_glx,
+        );
+    }
+
+    println!("{} {}", major_glx, minor_glx);
+
     unsafe {
         let screen = xlib::XDefaultScreen(display);
         let root = xlib::XRootWindow(display, screen);
