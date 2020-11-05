@@ -4,3 +4,7 @@ members = [
     "glx",
     "koala_chess"
 ]
+
+[profile.release]
+lto = true
+codegen-units = 1
