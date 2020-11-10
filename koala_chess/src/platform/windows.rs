@@ -78,18 +78,18 @@ pub fn create_window() -> Option<HWND> {
 
     unsafe {
         window = CreateWindowExW(
-            0,
-            window_class.lpszClassName,
-            window_name.as_ptr(),
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            std::ptr::null_mut(),
-            std::ptr::null_mut(),
-            window_class.hInstance,
-            std::ptr::null_mut(),
+            0,                                // dwExStyle
+            window_class.lpszClassName,       // lpClassName
+            window_name.as_ptr(),             // lpWindowName
+            WS_OVERLAPPEDWINDOW | WS_VISIBLE, // dwStyle
+            CW_USEDEFAULT,                    // X
+            CW_USEDEFAULT,                    // Y
+            CW_USEDEFAULT,                    // nWidth
+            CW_USEDEFAULT,                    // nHeight
+            std::ptr::null_mut(),             // hWndParent
+            std::ptr::null_mut(),             // hMenu
+            window_class.hInstance,           // hInstance
+            std::ptr::null_mut(),             // lpParam
         );
     }
 

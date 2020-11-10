@@ -2,7 +2,11 @@ use std::{ffi::CString, os::raw::c_int, os::raw::c_uint};
 use x11::xlib;
 
 pub fn create_window() {
-    let display = unsafe { xlib::XOpenDisplay(std::ptr::null()) };
+    let display = unsafe {
+        xlib::XOpenDisplay(
+            std::ptr::null(), // display_name
+        )
+    };
 
     if display.is_null() {
         // TODO: Error handling
@@ -31,30 +35,41 @@ pub fn create_window() {
             std::mem::MaybeUninit::uninit().assume_init();
         attributes.background_pixel = xlib::XWhitePixel(display, screen);
 
+        // Create window
         let window = xlib::XCreateWindow(
-            display,
-            root,
-            0,
-            0,
-            400,
-            300,
-            0,
-            0,
-            xlib::InputOutput as c_uint,
-            std::ptr::null_mut(),
-            xlib::CWBackPixel,
-            &mut attributes,
+            display,                     // display
+            root,                        // parent
+            0,                           // x
+            0,                           // y
+            400,                         // width
+            300,                         // height
+            0,                           // border_width
+            0,                           // depth
+            xlib::InputOutput as c_uint, // class
+            std::ptr::null_mut(),        // visual
+            xlib::CWBackPixel,           // valuemask
+            &mut attributes,             // attributes
         );
 
-        let title_str = CString::new("Koala chess").unwrap();
-        xlib::XStoreName(display, window, title_str.as_ptr());
+        // Create window name
+        let window_name = CString::new("Koala chess").unwrap();
+
+        // Set window name
+        xlib::XStoreName(display, window, window_name.as_ptr());
 
         let wm_protocols_str = CString::new("WM_PROTOCOLS").unwrap();
         let wm_delete_window_str = CString::new("WM_DELETE_WINDOW").unwrap();
 
-        let wm_protocols = xlib::XInternAtom(display, wm_protocols_str.as_ptr(), xlib::False);
-        let wm_delete_window =
-            xlib::XInternAtom(display, wm_delete_window_str.as_ptr(), xlib::False);
+        let wm_protocols = xlib::XInternAtom(
+            display,                   // display
+            wm_protocols_str.as_ptr(), // atom_name
+            xlib::False,               // only_if_exists
+        );
+        let wm_delete_window = xlib::XInternAtom(
+            display,                       // display
+            wm_delete_window_str.as_ptr(), // atom_name
+            xlib::False,                   // only_if_exists
+        );
 
         let mut protocols = [wm_delete_window];
 
