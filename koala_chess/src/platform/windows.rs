@@ -39,17 +39,16 @@ pub fn create_window() -> Option<HWND> {
     window_class_name.push(0);
 
     // Create window class
-    let mut window_class = WNDCLASSW::default();
-
-    // CS_OWNDC - Allocates a unique device context for each window in the class
-    // CS_HREDRAW - Redraws the entire window if a movement or size adjustment changes the width of the client area
-    // CS_VREDRAW - Redraws the entire window if a movement or size adjustment changes the height of the client area
-    window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-    window_class.lpfnWndProc = Some(window_proc);
-    unsafe {
-        window_class.hInstance = GetModuleHandleW(std::ptr::null());
-    }
-    window_class.lpszClassName = window_class_name.as_ptr();
+    let window_class = WNDCLASSW {
+        // CS_OWNDC - Allocates a unique device context for each window in the class
+        // CS_HREDRAW - Redraws the entire window if a movement or size adjustment changes the width of the client area
+        // CS_VREDRAW - Redraws the entire window if a movement or size adjustment changes the height of the client area
+        style: CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
+        lpfnWndProc: Some(window_proc),
+        hInstance: unsafe { GetModuleHandleW(std::ptr::null()) },
+        lpszClassName: window_class_name.as_ptr(),
+        ..Default::default()
+    };
 
     // Register window class
     let error_code: ATOM;
@@ -236,19 +235,22 @@ fn initialize_open_gl(window: HWND) {
 
 fn negotiate_pixel_format(device_context: HDC) {
     // Create desired pixel format
-    let mut desired_pixel_format = PIXELFORMATDESCRIPTOR::default();
-    desired_pixel_format.nSize = std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as WORD;
-    desired_pixel_format.nVersion = 1;
-    desired_pixel_format.iPixelType = PFD_TYPE_RGBA;
-    desired_pixel_format.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+    let desired_pixel_format = PIXELFORMATDESCRIPTOR {
+        nSize: std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as WORD,
+        nVersion: 1,
+        iPixelType: PFD_TYPE_RGBA,
+        dwFlags: PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER,
 
-    // RGBA
-    desired_pixel_format.cColorBits = 32;
+        // RGBA
+        cColorBits: 32,
 
-    // Alpha
-    desired_pixel_format.cAlphaBits = 8;
+        // Alpha
+        cAlphaBits: 8,
 
-    desired_pixel_format.iLayerType = PFD_MAIN_PLANE;
+        iLayerType: PFD_MAIN_PLANE,
+
+        ..Default::default()
+    };
 
     let suggested_pixel_format_index =
         unsafe { ChoosePixelFormat(device_context, &desired_pixel_format) };
@@ -352,7 +354,7 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
         || address == 1 as PROC
         || address == 2 as PROC
         || address == 3 as PROC
-        || address == -1 as isize as PROC
+        || address == -1_isize as PROC
     {
         // Get address (via GetProcAddress)
         address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
