@@ -31,23 +31,23 @@ pub fn create_window() {
         let screen = xlib::XDefaultScreen(display);
 
         let mut attributes = vec![
-            glx::RGBA,
-            glx::DOUBLEBUFFER,
-            glx::DEPTH_SIZE,
+            glx::RGBA as glx::types::GLint,
+            glx::DOUBLEBUFFER as glx::types::GLint,
+            glx::DEPTH_SIZE as glx::types::GLint,
             24,
-            glx::STENCIL_SIZE,
+            glx::STENCIL_SIZE as glx::types::GLint,
             8,
-            glx::RED_SIZE,
+            glx::RED_SIZE as glx::types::GLint,
             8,
-            glx::GREEN_SIZE,
+            glx::GREEN_SIZE as glx::types::GLint,
             8,
-            glx::BLUE_SIZE,
+            glx::BLUE_SIZE as glx::types::GLint,
             8,
-            glx::SAMPLE_BUFFERS,
+            glx::SAMPLE_BUFFERS as glx::types::GLint,
             0,
-            glx::SAMPLES,
+            glx::SAMPLES as glx::types::GLint,
             0,
-            glx::NONE,
+            glx::NONE as glx::types::GLint,
         ];
 
         // Get a visual which matches the specified attributes
