@@ -25,10 +25,44 @@ pub fn create_window() {
         );
     }
 
-    println!("{} {}", major_glx, minor_glx);
+    println!("GLX version: {}.{}", major_glx, minor_glx);
 
     unsafe {
         let screen = xlib::XDefaultScreen(display);
+
+        let mut attributes = vec![
+            glx::RGBA,
+            glx::DOUBLEBUFFER,
+            glx::DEPTH_SIZE,
+            24,
+            glx::STENCIL_SIZE,
+            8,
+            glx::RED_SIZE,
+            8,
+            glx::GREEN_SIZE,
+            8,
+            glx::BLUE_SIZE,
+            8,
+            glx::SAMPLE_BUFFERS,
+            0,
+            glx::SAMPLES,
+            0,
+            glx::NONE,
+        ];
+
+        // Get a visual which matches the specified attributes
+        let visual = glx::ChooseVisual(
+            display as *mut glx::types::Display,
+            screen,
+            attributes.as_mut_ptr(),
+        );
+
+        if visual.is_null() {
+            // TODO: Error handling
+            eprintln!("Could not get a visual which matches the specified attributes!");
+            return;
+        }
+
         let root = xlib::XRootWindow(display, screen);
 
         let mut attributes: xlib::XSetWindowAttributes =
