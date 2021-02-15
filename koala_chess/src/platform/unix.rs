@@ -1,5 +1,5 @@
 use std::{ffi::CString, os::raw::c_int, os::raw::c_uint};
-use x11::{glx::GLX_X_RENDERABLE, xlib};
+use x11::xlib;
 
 pub fn create_window() {
     let display = unsafe {
@@ -31,7 +31,7 @@ pub fn create_window() {
         let screen = xlib::XDefaultScreen(display);
 
         #[rustfmt::skip]
-        let mut attributes = vec![
+        let attributes = vec![
             /* 0x0005 */ glx::DOUBLEBUFFER as glx::types::GLint,  true as glx::types::GLint,
             /* 0x0008 */ glx::RED_SIZE as glx::types::GLint,      8,
             /* 0x0009 */ glx::GREEN_SIZE as glx::types::GLint,    8,
@@ -46,16 +46,32 @@ pub fn create_window() {
             /* 0x8000 */ glx::NONE as glx::types::GLint, // This has to be the last item
         ];
 
-        // Get a visual which matches the specified attributes
-        let visual = glx::ChooseVisual(
+        let mut framebuffer_count = 0;
+
+        // Get framebuffer configs which match the specified attributes
+        let framebuffer_configs: *mut glx::types::GLXFBConfig = glx::ChooseFBConfig(
             display as *mut glx::types::Display,
             screen,
-            attributes.as_mut_ptr(),
+            attributes.as_ptr(),
+            &mut framebuffer_count,
         );
+
+        if framebuffer_count == 0 {
+            // TODO: Error handling
+            eprintln!("Could not get a framebuffer config which matches the specified attributes!");
+            return;
+        }
+
+        // Get the first framebuffer config
+        let framebuffer_config = *framebuffer_configs;
+
+        // Get a visual from the framebuffer config
+        let visual =
+            glx::GetVisualFromFBConfig(display as *mut glx::types::Display, framebuffer_config);
 
         if visual.is_null() {
             // TODO: Error handling
-            eprintln!("Could not get a visual which matches the specified attributes!");
+            eprintln!("Could not get a visual from the framebuffer config!");
             return;
         }
 
