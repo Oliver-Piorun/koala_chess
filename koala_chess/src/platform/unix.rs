@@ -1,5 +1,5 @@
 use std::{ffi::CString, os::raw::c_int, os::raw::c_uint};
-use x11::xlib;
+use x11::{glx::GLX_X_RENDERABLE, xlib};
 
 pub fn create_window() {
     let display = unsafe {
@@ -30,24 +30,20 @@ pub fn create_window() {
     unsafe {
         let screen = xlib::XDefaultScreen(display);
 
+        #[rustfmt::skip]
         let mut attributes = vec![
-            glx::RGBA as glx::types::GLint,
-            glx::DOUBLEBUFFER as glx::types::GLint,
-            glx::DEPTH_SIZE as glx::types::GLint,
-            24,
-            glx::STENCIL_SIZE as glx::types::GLint,
-            8,
-            glx::RED_SIZE as glx::types::GLint,
-            8,
-            glx::GREEN_SIZE as glx::types::GLint,
-            8,
-            glx::BLUE_SIZE as glx::types::GLint,
-            8,
-            glx::SAMPLE_BUFFERS as glx::types::GLint,
-            0,
-            glx::SAMPLES as glx::types::GLint,
-            0,
-            glx::NONE as glx::types::GLint,
+            /* 0x0005 */ x11::glx::GLX_DOUBLEBUFFER,  true as glx::types::GLint,
+            /* 0x0008 */ x11::glx::GLX_RED_SIZE,      8,
+            /* 0x0009 */ x11::glx::GLX_GREEN_SIZE,    8,
+            /* 0x000a */ x11::glx::GLX_BLUE_SIZE,     8,
+            /* 0x000b */ x11::glx::GLX_ALPHA_SIZE,    8,
+            /* 0x000c */ x11::glx::GLX_DEPTH_SIZE,    24,
+            /* 0x000d */ x11::glx::GLX_STENCIL_SIZE,  8,
+            /* 0x0022 */ x11::glx::GLX_X_VISUAL_TYPE, x11::glx::GLX_TRUE_COLOR,
+            /* 0x8010 */ x11::glx::GLX_DRAWABLE_TYPE, x11::glx::GLX_WINDOW_BIT,
+            /* 0x8011 */ x11::glx::GLX_RENDER_TYPE,   x11::glx::GLX_RGBA_BIT,
+            /* 0x8012 */ x11::glx::GLX_X_RENDERABLE,  true as glx::types::GLint,
+            /* 0x8000 */ x11::glx::GLX_NONE, // This has to be the last item
         ];
 
         // Get a visual which matches the specified attributes
