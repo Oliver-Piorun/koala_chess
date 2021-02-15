@@ -39,9 +39,9 @@ pub fn create_window() {
             /* 0x000b */ glx::ALPHA_SIZE as glx::types::GLint,    8,
             /* 0x000c */ glx::DEPTH_SIZE as glx::types::GLint,    24,
             /* 0x000d */ glx::STENCIL_SIZE as glx::types::GLint,  8,
-            /* 0x0022 */ glx::X_VISUAL_TYPE as glx::types::GLint, x11::glx::GLX_TRUE_COLOR,
-            /* 0x8010 */ glx::DRAWABLE_TYPE as glx::types::GLint, x11::glx::GLX_WINDOW_BIT,
-            /* 0x8011 */ glx::RENDER_TYPE as glx::types::GLint,   x11::glx::GLX_RGBA_BIT,
+            /* 0x0022 */ glx::X_VISUAL_TYPE as glx::types::GLint, glx::TRUE_COLOR as glx::types::GLint,
+            /* 0x8010 */ glx::DRAWABLE_TYPE as glx::types::GLint, glx::WINDOW_BIT as glx::types::GLint,
+            /* 0x8011 */ glx::RENDER_TYPE as glx::types::GLint,   glx::RGBA_BIT as glx::types::GLint,
             /* 0x8012 */ glx::X_RENDERABLE as glx::types::GLint,  true as glx::types::GLint,
             /* 0x8000 */ glx::NONE as glx::types::GLint, // This has to be the last item
         ];
