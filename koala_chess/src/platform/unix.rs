@@ -32,18 +32,18 @@ pub fn create_window() {
 
         #[rustfmt::skip]
         let mut attributes = vec![
-            /* 0x0005 */ x11::glx::GLX_DOUBLEBUFFER,  true as glx::types::GLint,
-            /* 0x0008 */ x11::glx::GLX_RED_SIZE,      8,
-            /* 0x0009 */ x11::glx::GLX_GREEN_SIZE,    8,
-            /* 0x000a */ x11::glx::GLX_BLUE_SIZE,     8,
-            /* 0x000b */ x11::glx::GLX_ALPHA_SIZE,    8,
-            /* 0x000c */ x11::glx::GLX_DEPTH_SIZE,    24,
-            /* 0x000d */ x11::glx::GLX_STENCIL_SIZE,  8,
-            /* 0x0022 */ x11::glx::GLX_X_VISUAL_TYPE, x11::glx::GLX_TRUE_COLOR,
-            /* 0x8010 */ x11::glx::GLX_DRAWABLE_TYPE, x11::glx::GLX_WINDOW_BIT,
-            /* 0x8011 */ x11::glx::GLX_RENDER_TYPE,   x11::glx::GLX_RGBA_BIT,
-            /* 0x8012 */ x11::glx::GLX_X_RENDERABLE,  true as glx::types::GLint,
-            /* 0x8000 */ x11::glx::GLX_NONE, // This has to be the last item
+            /* 0x0005 */ glx::DOUBLEBUFFER as glx::types::GLint,  true as glx::types::GLint,
+            /* 0x0008 */ glx::RED_SIZE as glx::types::GLint,      8,
+            /* 0x0009 */ glx::GREEN_SIZE as glx::types::GLint,    8,
+            /* 0x000a */ glx::BLUE_SIZE as glx::types::GLint,     8,
+            /* 0x000b */ glx::ALPHA_SIZE as glx::types::GLint,    8,
+            /* 0x000c */ glx::DEPTH_SIZE as glx::types::GLint,    24,
+            /* 0x000d */ glx::STENCIL_SIZE as glx::types::GLint,  8,
+            /* 0x0022 */ glx::X_VISUAL_TYPE as glx::types::GLint, x11::glx::GLX_TRUE_COLOR,
+            /* 0x8010 */ glx::DRAWABLE_TYPE as glx::types::GLint, x11::glx::GLX_WINDOW_BIT,
+            /* 0x8011 */ glx::RENDER_TYPE as glx::types::GLint,   x11::glx::GLX_RGBA_BIT,
+            /* 0x8012 */ glx::X_RENDERABLE as glx::types::GLint,  true as glx::types::GLint,
+            /* 0x8000 */ glx::NONE as glx::types::GLint, // This has to be the last item
         ];
 
         // Get a visual which matches the specified attributes
