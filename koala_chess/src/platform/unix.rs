@@ -1,4 +1,7 @@
-use std::{ffi::CString, os::raw::c_int, os::raw::c_uint};
+use std::{
+    ffi::{c_void, CString},
+    os::raw::{c_int, c_uint},
+};
 use x11::xlib;
 
 pub fn create_window() {
@@ -73,6 +76,24 @@ pub fn create_window() {
             // TODO: Error handling
             eprintln!("Could not get a visual from the framebuffer config!");
             return;
+        }
+
+        let context: glx::types::GLXContext;
+
+        if is_extension_supported(
+            "GLX_ARB_create_context",
+            display as *mut glx::types::Display,
+            screen,
+        ) {
+            context = glx::CreateNewContext(
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+                glx::RGBA_TYPE as i32,               // render_type
+                0 as *const c_void,                  // share_list
+                true as i32,                         // direct
+            );
+        } else {
+            // TODO: Call glXCreateContextAttribsARB
         }
 
         let root = xlib::XRootWindow(display, screen);
@@ -151,4 +172,18 @@ pub fn create_window() {
 
         xlib::XCloseDisplay(display);
     }
+}
+
+unsafe fn is_extension_supported(
+    extension: &str,
+    display: *mut glx::types::Display,
+    screen: glx::types::GLint,
+) -> bool {
+    let query_extension_string_raw =
+        glx::QueryExtensionsString(display as *mut glx::types::Display, screen);
+    let query_extension_string_cstring =
+        std::ffi::CString::from_raw(query_extension_string_raw as *mut i8);
+    let query_extension_string_str = query_extension_string_cstring.to_str().unwrap();
+
+    query_extension_string_str.contains(extension)
 }
