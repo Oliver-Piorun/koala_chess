@@ -21,6 +21,7 @@ pub fn create_window() {
     let mut minor_glx: glx::types::GLint = 0;
 
     unsafe {
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXQueryVersion.xml
         glx::QueryVersion(
             display as *mut glx::types::Display,
             &mut major_glx,
@@ -52,6 +53,7 @@ pub fn create_window() {
         let mut framebuffer_count = 0;
 
         // Get framebuffer configs which match the specified attributes
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXChooseFBConfig.xml
         let framebuffer_configs: *mut glx::types::GLXFBConfig = glx::ChooseFBConfig(
             display as *mut glx::types::Display,
             screen,
@@ -69,6 +71,7 @@ pub fn create_window() {
         let framebuffer_config = *framebuffer_configs;
 
         // Get a visual from the framebuffer config
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetVisualFromFBConfig.xml
         let visual =
             glx::GetVisualFromFBConfig(display as *mut glx::types::Display, framebuffer_config);
 
@@ -85,6 +88,7 @@ pub fn create_window() {
             display as *mut glx::types::Display,
             screen,
         ) {
+            // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXCreateNewContext.xml
             context = glx::CreateNewContext(
                 display as *mut glx::types::Display, // dpy
                 framebuffer_config,                  // config
