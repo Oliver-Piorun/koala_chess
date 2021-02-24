@@ -2,7 +2,7 @@ use std::{
     ffi::{c_void, CString},
     os::raw::{c_int, c_uint},
 };
-use x11::xlib;
+use x11::{glx::arb::GLX_CONTEXT_MINOR_VERSION_ARB, xlib};
 
 pub fn create_window() {
     let display = unsafe {
@@ -83,7 +83,7 @@ pub fn create_window() {
 
         let context: glx::types::GLXContext;
 
-        if is_extension_supported(
+        if !is_extension_supported(
             "GLX_ARB_create_context",
             display as *mut glx::types::Display,
             screen,
@@ -97,7 +97,22 @@ pub fn create_window() {
                 true as i32,                         // direct
             );
         } else {
-            // TODO: Call glXCreateContextAttribsARB
+            #[rustfmt::skip]
+            let context_attributes = vec![
+                glx::CONTEXT_MAJOR_VERSION_ARB as glx::types::GLint, 3,
+                glx::CONTEXT_MINOR_VERSION_ARB as glx::types::GLint, 2,
+                glx::CONTEXT_FLAGS_ARB as glx::types::GLint,         glx::CONTEXT_FORWARD_COMPATIBLE_BIT_ARB as glx::types::GLint,
+                glx::NONE as glx::types::GLint, // This has to be the last item
+            ];
+
+            // Reference: https://www.khronos.org/registry/OpenGL/extensions/ARB/GLX_ARB_create_context.txt
+            context = glx::CreateContextAttribsARB(
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+                0 as glx::types::GLXContext,         // share_context
+                true as glx::types::Bool,            // direct
+                context_attributes.as_ptr(),         // attrib_list
+            );
         }
 
         let root = xlib::XRootWindow(display, screen);
