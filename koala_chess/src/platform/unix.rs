@@ -102,6 +102,7 @@ pub fn create_window() {
                 glx::CONTEXT_MAJOR_VERSION_ARB as glx::types::GLint, 3,
                 glx::CONTEXT_MINOR_VERSION_ARB as glx::types::GLint, 2,
                 glx::CONTEXT_FLAGS_ARB as glx::types::GLint,         glx::CONTEXT_FORWARD_COMPATIBLE_BIT_ARB as glx::types::GLint,
+                glx::CONTEXT_PROFILE_MASK_ARB as glx::types::GLint,  glx::CONTEXT_CORE_PROFILE_BIT_ARB as glx::types::GLint,
                 glx::NONE as glx::types::GLint, // This has to be the last item
             ];
 
