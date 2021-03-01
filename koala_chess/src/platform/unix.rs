@@ -171,7 +171,17 @@ pub fn create_window() {
             return;
         }
 
-        println!("context: {:p}", context);
+        // Flush the output buffer and wait until all request have been received and processed by the X server
+        // Reference: https://tronche.com/gui/x/xlib/event-handling/XSync.html
+        xlib::XSync(display, xlib::False);
+
+        // Check if we obtained a direct context
+        if glx::IsDirect(display as *mut glx::types::Display, context) == false as glx::types::Bool
+        {
+            // TODO: Error handling
+            eprintln!("Created context is not a direct context!");
+            return;
+        }
 
         let mut attributes: xlib::XSetWindowAttributes =
             std::mem::MaybeUninit::uninit().assume_init();
@@ -202,6 +212,10 @@ pub fn create_window() {
             xlib::CWBackPixel | xlib::CWColormap | xlib::CWBorderPixel | xlib::CWEventMask, // valuemask
             &mut attributes, // attributes
         );
+
+        // Make context the current GLX rendering context of the calling thread and attach the context to the window
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXMakeCurrent.xml
+        glx::MakeCurrent(display as *mut glx::types::Display, window, context);
 
         // Create window name
         let window_name = CString::new("Koala chess").unwrap();
