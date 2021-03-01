@@ -5,6 +5,8 @@ use std::{
 use x11::xlib;
 
 pub fn create_window() {
+    initialize_glx_addresses();
+
     let display = unsafe {
         xlib::XOpenDisplay(
             std::ptr::null(), // display_name
@@ -30,6 +32,7 @@ pub fn create_window() {
     }
 
     println!("GLX version: {}.{}", major_glx, minor_glx);
+    return;
 
     unsafe {
         // Reference: https://tronche.com/gui/x/xlib/display/display-macros.html#DefaultScreen
@@ -298,6 +301,38 @@ pub fn create_window() {
             }
         }
     }
+}
+
+fn initialize_glx_addresses() {
+    // Get and assign addresses
+    let _ = glx::GetProcAddress::load_with(|function_name| unsafe {
+        // Create null-terminated function name
+        let null_terminated_function_name = CString::new(function_name).unwrap();
+
+        // TODO: Don't use the x11 library to get the address of GetProcAddress but rather something like this:
+        // https://stackoverflow.com/questions/38674176/manually-calling-opengl-functions
+        x11::glx::glXGetProcAddress(
+            null_terminated_function_name.as_ptr() as *const glx::types::GLubyte
+        )
+        .unwrap() as *const std::ffi::c_void
+    });
+    let _ = glx::QueryVersion::load_with(|function_name| get_glx_address(function_name));
+}
+
+fn get_glx_address(function_name: &str) -> *const std::ffi::c_void {
+    // Create null-terminated function name
+    let null_terminated_function_name = CString::new(function_name).unwrap();
+
+    let mut address = unsafe {
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetProcAddress.xml
+        glx::GetProcAddress(
+            null_terminated_function_name.as_ptr() as *const glx::types::GLubyte, // proc_name
+        )
+    };
+
+    println!("{:p}", address);
+
+    address as *const std::ffi::c_void
 }
 
 unsafe fn is_extension_supported(
