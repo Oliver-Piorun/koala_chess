@@ -132,7 +132,7 @@ pub fn create_window() {
             return;
         }
 
-        let mut context: glx::types::GLXContext = std::ptr::null_mut();
+        let context;
 
         if !is_extension_supported(
             "GLX_ARB_create_context",
@@ -173,10 +173,17 @@ pub fn create_window() {
 
         // Flush the output buffer and wait until all request have been received and processed by the X server
         // Reference: https://tronche.com/gui/x/xlib/event-handling/XSync.html
-        xlib::XSync(display, xlib::False);
+        xlib::XSync(
+            display,     // display
+            xlib::False, // discard
+        );
 
         // Check if we obtained a direct context
-        if glx::IsDirect(display as *mut glx::types::Display, context) == false as glx::types::Bool
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXIsDirect.xml
+        if glx::IsDirect(
+            display as *mut glx::types::Display, // dpy
+            context,                             // ctx
+        ) == false as glx::types::Bool
         {
             // TODO: Error handling
             eprintln!("Created context is not a direct context!");
@@ -215,7 +222,11 @@ pub fn create_window() {
 
         // Make context the current GLX rendering context of the calling thread and attach the context to the window
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXMakeCurrent.xml
-        glx::MakeCurrent(display as *mut glx::types::Display, window, context);
+        glx::MakeCurrent(
+            display as *mut glx::types::Display, // dpy
+            window,                              // drawable
+            context,                             // ctx
+        );
 
         // Create window name
         let window_name = CString::new("Koala chess").unwrap();
