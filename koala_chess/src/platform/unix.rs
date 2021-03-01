@@ -23,17 +23,25 @@ pub fn create_window() {
     unsafe {
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXQueryVersion.xml
         glx::QueryVersion(
-            display as *mut glx::types::Display,
-            &mut major_glx,
-            &mut minor_glx,
+            display as *mut glx::types::Display, // dpy
+            &mut major_glx,                      // major
+            &mut minor_glx,                      // minor
         );
     }
 
     println!("GLX version: {}.{}", major_glx, minor_glx);
 
     unsafe {
-        let screen_id = xlib::XDefaultScreen(display);
-        let root = xlib::XRootWindow(display, screen_id);
+        // Reference: https://tronche.com/gui/x/xlib/display/display-macros.html#DefaultScreen
+        let screen_id = xlib::XDefaultScreen(
+            display, // display
+        );
+
+        // Reference: https://tronche.com/gui/x/xlib/display/display-macros.html#RootWindow
+        let root = xlib::XRootWindow(
+            display,   // display
+            screen_id, // screen_number
+        );
 
         #[rustfmt::skip]
         let framebuffer_attributes = vec![
@@ -74,8 +82,12 @@ pub fn create_window() {
 
         for i in 0..framebuffer_count as isize {
             let framebuffer_config = *framebuffer_configs.offset(i);
-            let visual_info =
-                glx::GetVisualFromFBConfig(display as *mut glx::types::Display, framebuffer_config);
+
+            // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetVisualFromFBConfig.xml
+            let visual_info = glx::GetVisualFromFBConfig(
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+            );
 
             if visual_info.is_null() {
                 continue;
@@ -84,17 +96,18 @@ pub fn create_window() {
             let mut num_sample_buffers = 0;
             let mut num_samples = 0;
 
+            // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetFBConfigAttrib.xml
             glx::GetFBConfigAttrib(
-                display as *mut glx::types::Display,
-                framebuffer_config,
-                glx::SAMPLE_BUFFERS as i32,
-                &mut num_sample_buffers as *mut i32,
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+                glx::SAMPLE_BUFFERS as i32,          // attribute
+                &mut num_sample_buffers as *mut i32, // value
             );
             glx::GetFBConfigAttrib(
-                display as *mut glx::types::Display,
-                framebuffer_config,
-                glx::SAMPLES as i32,
-                &mut num_samples as *mut i32,
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+                glx::SAMPLES as i32,                 // attribute
+                &mut num_samples as *mut i32,        // value
             );
 
             if num_sample_buffers > 0 && num_samples > max_num_samples {
@@ -250,14 +263,19 @@ pub fn create_window() {
 
         let mut protocols = [wm_delete_window];
 
+        // Reference: https://tronche.com/gui/x/xlib/ICC/client-to-window-manager/XSetWMProtocols.html
         xlib::XSetWMProtocols(
-            display,
-            window,
-            protocols.as_mut_ptr(),
-            protocols.len() as c_int,
+            display,                  // display
+            window,                   // w
+            protocols.as_mut_ptr(),   // protocols
+            protocols.len() as c_int, // count
         );
 
-        xlib::XMapWindow(display, window);
+        // Reference: https://tronche.com/gui/x/xlib/window/XMapWindow.html
+        xlib::XMapWindow(
+            display, // display
+            window,  // w
+        );
 
         let mut event: xlib::XEvent = std::mem::MaybeUninit::uninit().assume_init();
 
