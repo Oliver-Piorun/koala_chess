@@ -2,7 +2,7 @@ use std::{
     ffi::{c_void, CString},
     os::raw::{c_int, c_uint},
 };
-use x11::{glx::arb::GLX_CONTEXT_MINOR_VERSION_ARB, xlib};
+use x11::xlib;
 
 pub fn create_window() {
     let display = unsafe {
@@ -32,10 +32,11 @@ pub fn create_window() {
     println!("GLX version: {}.{}", major_glx, minor_glx);
 
     unsafe {
-        let screen = xlib::XDefaultScreen(display);
+        let screen_id = xlib::XDefaultScreen(display);
+        let root = xlib::XRootWindow(display, screen_id);
 
         #[rustfmt::skip]
-        let attributes = vec![
+        let framebuffer_attributes = vec![
             /* 0x0005 */ glx::DOUBLEBUFFER as glx::types::GLint,  true as glx::types::GLint,
             /* 0x0008 */ glx::RED_SIZE as glx::types::GLint,      8,
             /* 0x0009 */ glx::GREEN_SIZE as glx::types::GLint,    8,
@@ -55,10 +56,10 @@ pub fn create_window() {
         // Get framebuffer configs which match the specified attributes
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXChooseFBConfig.xml
         let framebuffer_configs: *mut glx::types::GLXFBConfig = glx::ChooseFBConfig(
-            display as *mut glx::types::Display,
-            screen,
-            attributes.as_ptr(),
-            &mut framebuffer_count,
+            display as *mut glx::types::Display, // dpy
+            screen_id,                           // screen
+            framebuffer_attributes.as_ptr(),     // attrib_list
+            &mut framebuffer_count,              // nelements
         );
 
         if framebuffer_count == 0 {
@@ -67,33 +68,83 @@ pub fn create_window() {
             return;
         }
 
-        // Get the first framebuffer config
-        let framebuffer_config = *framebuffer_configs;
+        // Find the best framebuffer config
+        let mut best_framebuffer_config_index = Option::<isize>::None;
+        let mut max_num_samples = -1;
 
-        // Get a visual from the framebuffer config
-        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetVisualFromFBConfig.xml
-        let visual =
-            glx::GetVisualFromFBConfig(display as *mut glx::types::Display, framebuffer_config);
+        for i in 0..framebuffer_count as isize {
+            let framebuffer_config = *framebuffer_configs.offset(i);
+            let visual_info =
+                glx::GetVisualFromFBConfig(display as *mut glx::types::Display, framebuffer_config);
 
-        if visual.is_null() {
-            // TODO: Error handling
-            eprintln!("Could not get a visual from the framebuffer config!");
+            if visual_info.is_null() {
+                continue;
+            }
+
+            let mut num_sample_buffers = 0;
+            let mut num_samples = 0;
+
+            glx::GetFBConfigAttrib(
+                display as *mut glx::types::Display,
+                framebuffer_config,
+                glx::SAMPLE_BUFFERS as i32,
+                &mut num_sample_buffers as *mut i32,
+            );
+            glx::GetFBConfigAttrib(
+                display as *mut glx::types::Display,
+                framebuffer_config,
+                glx::SAMPLES as i32,
+                &mut num_samples as *mut i32,
+            );
+
+            if num_sample_buffers > 0 && num_samples > max_num_samples {
+                best_framebuffer_config_index = Some(i);
+                max_num_samples = num_samples;
+            }
+
+            // Free visual info
+            xlib::XFree(visual_info as *mut c_void);
+        }
+
+        if best_framebuffer_config_index.is_none() {
+            // Error handling
+            eprintln!("Could not find the best framebuffer config!");
             return;
         }
 
-        let context: glx::types::GLXContext;
+        // Get the best framebuffer config
+        let best_framebuffer_config =
+            *framebuffer_configs.offset(best_framebuffer_config_index.unwrap());
+
+        // Free framebuffer configs
+        xlib::XFree(framebuffer_configs as *mut c_void);
+
+        // Get a visual info from the framebuffer config
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetVisualFromFBConfig.xml
+        let visual_info = glx::GetVisualFromFBConfig(
+            display as *mut glx::types::Display, // dpy
+            best_framebuffer_config,             // config
+        );
+
+        if visual_info.is_null() {
+            // TODO: Error handling
+            eprintln!("Could not get a visual info from the framebuffer config!");
+            return;
+        }
+
+        let mut context: glx::types::GLXContext = std::ptr::null_mut();
 
         if !is_extension_supported(
             "GLX_ARB_create_context",
             display as *mut glx::types::Display,
-            screen,
+            screen_id,
         ) {
             // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXCreateNewContext.xml
             context = glx::CreateNewContext(
                 display as *mut glx::types::Display, // dpy
-                framebuffer_config,                  // config
+                best_framebuffer_config,             // config
                 glx::RGBA_TYPE as i32,               // render_type
-                0 as *const c_void,                  // share_list
+                std::ptr::null::<c_void>(),          // share_list
                 true as i32,                         // direct
             );
         } else {
@@ -101,41 +152,55 @@ pub fn create_window() {
             let context_attributes = vec![
                 glx::CONTEXT_MAJOR_VERSION_ARB as glx::types::GLint, 3,
                 glx::CONTEXT_MINOR_VERSION_ARB as glx::types::GLint, 2,
-                glx::CONTEXT_FLAGS_ARB as glx::types::GLint,         glx::CONTEXT_FORWARD_COMPATIBLE_BIT_ARB as glx::types::GLint,
-                glx::CONTEXT_PROFILE_MASK_ARB as glx::types::GLint,  glx::CONTEXT_CORE_PROFILE_BIT_ARB as glx::types::GLint,
-                glx::NONE as glx::types::GLint, // This has to be the last item
+                0, // This has to be the last item
             ];
 
             // Reference: https://www.khronos.org/registry/OpenGL/extensions/ARB/GLX_ARB_create_context.txt
             context = glx::CreateContextAttribsARB(
                 display as *mut glx::types::Display, // dpy
-                framebuffer_config,                  // config
+                best_framebuffer_config,             // config
                 0 as glx::types::GLXContext,         // share_context
                 true as glx::types::Bool,            // direct
                 context_attributes.as_ptr(),         // attrib_list
             );
         }
 
-        let root = xlib::XRootWindow(display, screen);
+        if context.is_null() {
+            // TODO: Error handling
+            eprintln!("Could not create a context!");
+            return;
+        }
+
+        println!("context: {:p}", context);
 
         let mut attributes: xlib::XSetWindowAttributes =
             std::mem::MaybeUninit::uninit().assume_init();
-        attributes.background_pixel = xlib::XWhitePixel(display, screen);
+        attributes.border_pixel = xlib::XBlackPixel(display, screen_id);
+        attributes.background_pixel = xlib::XWhitePixel(display, screen_id);
+        attributes.override_redirect = xlib::True;
+        attributes.colormap = xlib::XCreateColormap(
+            display,
+            root,
+            (*visual_info).visual as *mut xlib::Visual,
+            xlib::AllocNone,
+        );
+        attributes.event_mask = xlib::ExposureMask;
 
         // Create window
+        // Reference: https://tronche.com/gui/x/xlib/window/XCreateWindow.html
         let window = xlib::XCreateWindow(
-            display,                     // display
-            root,                        // parent
-            0,                           // x
-            0,                           // y
-            400,                         // width
-            300,                         // height
-            0,                           // border_width
-            0,                           // depth
-            xlib::InputOutput as c_uint, // class
-            std::ptr::null_mut(),        // visual
-            xlib::CWBackPixel,           // valuemask
-            &mut attributes,             // attributes
+            display,                                                                        // display
+            root,                                       // parent
+            0,                                          // x
+            0,                                          // y
+            400,                                        // width
+            300,                                        // height
+            0,                                          // border_width
+            (*visual_info).depth,                       // depth
+            xlib::InputOutput as c_uint,                // class
+            (*visual_info).visual as *mut xlib::Visual, // visual
+            xlib::CWBackPixel | xlib::CWColormap | xlib::CWBorderPixel | xlib::CWEventMask, // valuemask
+            &mut attributes, // attributes
         );
 
         // Create window name
@@ -189,8 +254,6 @@ pub fn create_window() {
                 _ => (),
             }
         }
-
-        xlib::XCloseDisplay(display);
     }
 }
 
@@ -199,8 +262,12 @@ unsafe fn is_extension_supported(
     display: *mut glx::types::Display,
     screen: glx::types::GLint,
 ) -> bool {
-    let query_extension_string_raw =
-        glx::QueryExtensionsString(display as *mut glx::types::Display, screen);
+    // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXQueryExtensionsString.xml
+    let query_extension_string_raw = glx::QueryExtensionsString(
+        display as *mut glx::types::Display, // dpy
+        screen,                              // screen
+    );
+
     let query_extension_string_cstring =
         std::ffi::CString::from_raw(query_extension_string_raw as *mut i8);
     let query_extension_string_str = query_extension_string_cstring.to_str().unwrap();

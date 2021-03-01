@@ -10,7 +10,7 @@ fn main() {
         (1, 4),
         Profile::Core,
         Fallbacks::All,
-        ["GLX_ARB_create_context", "GLX_ARB_create_context_profile"],
+        ["GLX_ARB_create_context"],
     )
     .write_bindings(StaticGenerator, &mut file)
     .unwrap();
