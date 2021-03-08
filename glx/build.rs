@@ -1,4 +1,4 @@
-use gl_generator::{Api, Fallbacks, Profile, Registry, StaticGenerator};
+use gl_generator::{Api, Fallbacks, GlobalGenerator, Profile, Registry};
 use std::{env, fs::File, path::Path};
 
 fn main() {
@@ -12,6 +12,6 @@ fn main() {
         Fallbacks::All,
         ["GLX_ARB_create_context"],
     )
-    .write_bindings(StaticGenerator, &mut file)
+    .write_bindings(GlobalGenerator, &mut file)
     .unwrap();
 }
