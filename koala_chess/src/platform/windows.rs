@@ -1,8 +1,13 @@
 use crate::game::Game;
 use crate::traits::Draw;
-use lazy_static::lazy_static;
-use std::sync::{atomic::AtomicBool, Mutex};
-use std::{ffi::CString, ffi::OsStr, io, os::windows::ffi::OsStrExt, sync::atomic::Ordering};
+use std::ffi::{CString, OsStr};
+use std::io;
+use std::lazy::SyncLazy;
+use std::os::windows::ffi::OsStrExt;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Mutex,
+};
 use winapi::{
     shared::{
         minwindef::{ATOM, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},
@@ -26,10 +31,8 @@ use winapi::{
     },
 };
 
-lazy_static! {
-    static ref ASPECT_RATIO: Mutex<f32> = Mutex::new(1.0);
-    static ref INITIALIZED_OPEN_GL: AtomicBool = AtomicBool::new(false);
-}
+static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
+static INITIALIZED_OPEN_GL: SyncLazy<AtomicBool> = SyncLazy::new(|| AtomicBool::new(false));
 
 pub fn create_window() -> Option<HWND> {
     // Create window class name

@@ -1,13 +1,10 @@
-use lazy_static::lazy_static;
-use std::sync::Mutex;
-
 use crate::bitmap;
 use crate::shader::Shader;
 use crate::traits::Draw;
+use std::lazy::SyncLazy;
+use std::sync::Mutex;
 
-lazy_static! {
-    static ref SHADER: Mutex<Option<Shader>> = Mutex::new(None);
-}
+static SHADER: SyncLazy<Mutex<Option<Shader>>> = SyncLazy::new(|| Mutex::new(None));
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
