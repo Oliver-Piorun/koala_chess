@@ -1,3 +1,6 @@
+// For SyncLazy
+#![feature(once_cell)]
+
 mod bitmap;
 mod board;
 mod game;
