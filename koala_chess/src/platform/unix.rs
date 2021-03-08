@@ -1,10 +1,14 @@
-use std::{
-    ffi::{c_void, CStr, CString},
-    os::raw::{c_int, c_uint},
-};
+use crate::game::Game;
+use crate::traits::Draw;
+use std::ffi::{c_void, CStr, CString};
+use std::lazy::SyncLazy;
+use std::os::raw::{c_int, c_uint};
+use std::sync::Mutex;
 use x11::xlib;
 
-pub fn create_window() {
+static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
+
+pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
     initialize_glx_addresses();
     initialize_open_gl_addresses();
 
@@ -17,7 +21,7 @@ pub fn create_window() {
     if display.is_null() {
         // TODO: Error handling
         eprintln!("Could not open display!");
-        return;
+        return None;
     }
 
     let mut major_glx: glx::types::GLint = 0;
@@ -76,7 +80,7 @@ pub fn create_window() {
         if framebuffer_count == 0 {
             // TODO: Error handling
             eprintln!("Could not get a framebuffer config which matches the specified attributes!");
-            return;
+            return None;
         }
 
         // Find the best framebuffer config
@@ -125,7 +129,7 @@ pub fn create_window() {
         if best_framebuffer_config_index.is_none() {
             // Error handling
             eprintln!("Could not find the best framebuffer config!");
-            return;
+            return None;
         }
 
         // Get the best framebuffer config
@@ -145,7 +149,7 @@ pub fn create_window() {
         if visual_info.is_null() {
             // TODO: Error handling
             eprintln!("Could not get a visual info from the framebuffer config!");
-            return;
+            return None;
         }
 
         let context;
@@ -184,7 +188,7 @@ pub fn create_window() {
         if context.is_null() {
             // TODO: Error handling
             eprintln!("Could not create a context!");
-            return;
+            return None;
         }
 
         // Flush the output buffer and wait until all request have been received and processed by the X server
@@ -203,7 +207,7 @@ pub fn create_window() {
         {
             // TODO: Error handling
             eprintln!("Created context is not a direct context!");
-            return;
+            return None;
         }
 
         let mut attributes: xlib::XSetWindowAttributes =
@@ -262,6 +266,18 @@ pub fn create_window() {
         // Set window name
         xlib::XStoreName(display, window, window_name.as_ptr());
 
+        // Reference: https://tronche.com/gui/x/xlib/window/XMapWindow.html
+        xlib::XMapWindow(
+            display, // display
+            window,  // w
+        );
+
+        Some((display, window))
+    }
+}
+
+pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
+    unsafe {
         let wm_protocols_str = CString::new("WM_PROTOCOLS").unwrap();
         let wm_delete_window_str = CString::new("WM_DELETE_WINDOW").unwrap();
 
@@ -286,12 +302,6 @@ pub fn create_window() {
             protocols.len() as c_int, // count
         );
 
-        // Reference: https://tronche.com/gui/x/xlib/window/XMapWindow.html
-        xlib::XMapWindow(
-            display, // display
-            window,  // w
-        );
-
         let mut event: xlib::XEvent = std::mem::MaybeUninit::uninit().assume_init();
 
         loop {
@@ -303,16 +313,17 @@ pub fn create_window() {
                 xlib::XGetWindowAttributes(display, window, &mut attributes);
                 let width = attributes.width;
                 let height = attributes.height;
+                let aspect_ratio = width as f32 / height as f32;
+                println!(
+                    "Expose: width: {} / height: {} / aspect_ratio: {}",
+                    width, height, aspect_ratio
+                );
+
+                *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
 
                 // Set viewport
                 gl::Viewport(0, 0, width, height);
             }
-
-            // Set the clear color
-            gl::ClearColor(0.17, 0.32, 0.59, 0.0);
-
-            // Clear the viewport with the clear color
-            gl::Clear(gl::COLOR_BUFFER_BIT);
 
             match event.get_type() {
                 xlib::ClientMessage => {
@@ -328,6 +339,9 @@ pub fn create_window() {
                 }
                 _ => (),
             }
+
+            // Draw game
+            game.draw(*ASPECT_RATIO.lock().unwrap());
 
             glx::SwapBuffers(display as *mut glx::types::Display, window);
         }
@@ -360,9 +374,48 @@ fn initialize_glx_addresses() {
 }
 
 fn initialize_open_gl_addresses() {
+    // Get and assign addresses
+
+    // Get and assign addresses
+
+    // OpenGL <=1.1
     let _ = gl::Viewport::load_with(|function_name| get_address(function_name));
+    let _ = gl::GenTextures::load_with(|function_name| get_address(function_name));
+    let _ = gl::BindTexture::load_with(|function_name| get_address(function_name));
+    let _ = gl::TexImage2D::load_with(|function_name| get_address(function_name));
+    let _ = gl::TexParameteri::load_with(|function_name| get_address(function_name));
+    let _ = gl::Enable::load_with(|function_name| get_address(function_name));
     let _ = gl::ClearColor::load_with(|function_name| get_address(function_name));
     let _ = gl::Clear::load_with(|function_name| get_address(function_name));
+
+    // OpenGL >1.1
+    let _ = gl::CreateShader::load_with(|function_name| get_address(function_name));
+    let _ = gl::ShaderSource::load_with(|function_name| get_address(function_name));
+    let _ = gl::CompileShader::load_with(|function_name| get_address(function_name));
+    let _ = gl::CreateProgram::load_with(|function_name| get_address(function_name));
+    let _ = gl::AttachShader::load_with(|function_name| get_address(function_name));
+    let _ = gl::LinkProgram::load_with(|function_name| get_address(function_name));
+    let _ = gl::DeleteShader::load_with(|function_name| get_address(function_name));
+    let _ = gl::UseProgram::load_with(|function_name| get_address(function_name));
+    let _ = gl::GetUniformLocation::load_with(|function_name| get_address(function_name));
+    let _ = gl::Uniform1f::load_with(|function_name| get_address(function_name));
+    let _ = gl::GetShaderiv::load_with(|function_name| get_address(function_name));
+    let _ = gl::GetProgramiv::load_with(|function_name| get_address(function_name));
+    let _ = gl::GetShaderInfoLog::load_with(|function_name| get_address(function_name));
+    let _ = gl::GetProgramInfoLog::load_with(|function_name| get_address(function_name));
+
+    let _ = gl::GenVertexArrays::load_with(|function_name| get_address(function_name));
+    let _ = gl::GenBuffers::load_with(|function_name| get_address(function_name));
+    let _ = gl::BindVertexArray::load_with(|function_name| get_address(function_name));
+    let _ = gl::BindBuffer::load_with(|function_name| get_address(function_name));
+    let _ = gl::BufferData::load_with(|function_name| get_address(function_name));
+    let _ = gl::VertexAttribPointer::load_with(|function_name| get_address(function_name));
+    let _ = gl::EnableVertexAttribArray::load_with(|function_name| get_address(function_name));
+    let _ = gl::GenerateMipmap::load_with(|function_name| get_address(function_name));
+    let _ = gl::DrawElements::load_with(|function_name| get_address(function_name));
+    let _ = gl::BlendFunc::load_with(|function_name| get_address(function_name));
+
+    // Unix only
     let _ = gl::GetString::load_with(|function_name| get_address(function_name));
 }
 
@@ -376,6 +429,11 @@ fn get_address(function_name: &str) -> *const std::ffi::c_void {
             null_terminated_function_name.as_ptr() as *const glx::types::GLubyte, // proc_name
         )
     };
+
+    if address.is_null() {
+        // TODO: Error handling
+        eprintln!("Address ({}) is null!", function_name);
+    }
 
     address as *const std::ffi::c_void
 }
