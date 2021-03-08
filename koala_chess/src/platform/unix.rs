@@ -1,11 +1,12 @@
 use std::{
-    ffi::{c_void, CString},
+    ffi::{c_void, CStr, CString},
     os::raw::{c_int, c_uint},
 };
 use x11::xlib;
 
 pub fn create_window() {
     initialize_glx_addresses();
+    initialize_open_gl_addresses();
 
     let display = unsafe {
         xlib::XOpenDisplay(
@@ -243,6 +244,18 @@ pub fn create_window() {
             context,                             // ctx
         );
 
+        let vendor_cstr = CStr::from_ptr(gl::GetString(gl::VENDOR) as *mut i8);
+        let vendor = vendor_cstr.to_str().unwrap();
+        println!("GL vendor: {}", vendor);
+
+        let renderer_cstr = CStr::from_ptr(gl::GetString(gl::RENDERER) as *mut i8);
+        let renderer = renderer_cstr.to_str().unwrap();
+        println!("GL renderer: {}", renderer);
+
+        let version_cstr = CStr::from_ptr(gl::GetString(gl::VERSION) as *mut i8);
+        let version = version_cstr.to_str().unwrap();
+        println!("GL version: {}", version);
+
         // Create window name
         let window_name = CString::new("Koala chess").unwrap();
 
@@ -284,6 +297,23 @@ pub fn create_window() {
         loop {
             xlib::XNextEvent(display, &mut event);
 
+            if event.type_ == xlib::Expose {
+                let mut attributes: xlib::XWindowAttributes =
+                    std::mem::MaybeUninit::uninit().assume_init();
+                xlib::XGetWindowAttributes(display, window, &mut attributes);
+                let width = attributes.width;
+                let height = attributes.height;
+
+                // Set viewport
+                gl::Viewport(0, 0, width, height);
+            }
+
+            // Set the clear color
+            gl::ClearColor(0.17, 0.32, 0.59, 0.0);
+
+            // Clear the viewport with the clear color
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+
             match event.get_type() {
                 xlib::ClientMessage => {
                     let xclient = xlib::XClientMessageEvent::from(event);
@@ -298,6 +328,8 @@ pub fn create_window() {
                 }
                 _ => (),
             }
+
+            glx::SwapBuffers(display as *mut glx::types::Display, window);
         }
     }
 }
@@ -315,18 +347,26 @@ fn initialize_glx_addresses() {
         )
         .unwrap() as *const std::ffi::c_void
     });
-    let _ = glx::QueryVersion::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::ChooseFBConfig::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::GetVisualFromFBConfig::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::GetFBConfigAttrib::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::QueryExtensionsString::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::CreateNewContext::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::CreateContextAttribsARB::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::IsDirect::load_with(|function_name| get_glx_address(function_name));
-    let _ = glx::MakeCurrent::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::QueryVersion::load_with(|function_name| get_address(function_name));
+    let _ = glx::ChooseFBConfig::load_with(|function_name| get_address(function_name));
+    let _ = glx::GetVisualFromFBConfig::load_with(|function_name| get_address(function_name));
+    let _ = glx::GetFBConfigAttrib::load_with(|function_name| get_address(function_name));
+    let _ = glx::QueryExtensionsString::load_with(|function_name| get_address(function_name));
+    let _ = glx::CreateNewContext::load_with(|function_name| get_address(function_name));
+    let _ = glx::CreateContextAttribsARB::load_with(|function_name| get_address(function_name));
+    let _ = glx::IsDirect::load_with(|function_name| get_address(function_name));
+    let _ = glx::MakeCurrent::load_with(|function_name| get_address(function_name));
+    let _ = glx::SwapBuffers::load_with(|function_name| get_address(function_name));
 }
 
-fn get_glx_address(function_name: &str) -> *const std::ffi::c_void {
+fn initialize_open_gl_addresses() {
+    let _ = gl::Viewport::load_with(|function_name| get_address(function_name));
+    let _ = gl::ClearColor::load_with(|function_name| get_address(function_name));
+    let _ = gl::Clear::load_with(|function_name| get_address(function_name));
+    let _ = gl::GetString::load_with(|function_name| get_address(function_name));
+}
+
+fn get_address(function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
     let null_terminated_function_name = CString::new(function_name).unwrap();
 
