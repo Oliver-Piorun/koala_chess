@@ -32,7 +32,6 @@ pub fn create_window() {
     }
 
     println!("GLX version: {}.{}", major_glx, minor_glx);
-    return;
 
     unsafe {
         // Reference: https://tronche.com/gui/x/xlib/display/display-macros.html#DefaultScreen
@@ -317,20 +316,26 @@ fn initialize_glx_addresses() {
         .unwrap() as *const std::ffi::c_void
     });
     let _ = glx::QueryVersion::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::ChooseFBConfig::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::GetVisualFromFBConfig::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::GetFBConfigAttrib::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::QueryExtensionsString::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::CreateNewContext::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::CreateContextAttribsARB::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::IsDirect::load_with(|function_name| get_glx_address(function_name));
+    let _ = glx::MakeCurrent::load_with(|function_name| get_glx_address(function_name));
 }
 
 fn get_glx_address(function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
     let null_terminated_function_name = CString::new(function_name).unwrap();
 
-    let mut address = unsafe {
+    let address = unsafe {
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetProcAddress.xml
         glx::GetProcAddress(
             null_terminated_function_name.as_ptr() as *const glx::types::GLubyte, // proc_name
         )
     };
-
-    println!("{:p}", address);
 
     address as *const std::ffi::c_void
 }
