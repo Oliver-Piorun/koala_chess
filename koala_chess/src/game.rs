@@ -128,6 +128,14 @@ impl Game {
 
 impl Draw for Game {
     fn draw(&self, aspect_ratio: f32) {
+        unsafe {
+            // Set the clear color
+            gl::ClearColor(0.17, 0.32, 0.59, 0.0);
+
+            // Clear the viewport with the clear color
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+        }
+
         self.board.draw(aspect_ratio);
 
         for piece in self.pieces.iter() {

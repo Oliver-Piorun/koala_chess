@@ -142,12 +142,6 @@ pub fn r#loop(window: HWND, game: Game) {
 
         // Rendering
         unsafe {
-            // Set the clear color
-            gl::ClearColor(0.17, 0.32, 0.59, 0.0);
-
-            // Clear the viewport with the clear color
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-
             // Draw game
             game.draw(*ASPECT_RATIO.lock().unwrap());
 
@@ -366,7 +360,8 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
     if address.is_null() {
         // TODO: Error handling
         eprintln!(
-            "OpenGL address is null! (os error: {})",
+            "OpenGL address ({}) is null! (os error: {})",
+            function_name,
             io::Error::last_os_error()
         );
     }
