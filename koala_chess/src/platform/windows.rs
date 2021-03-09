@@ -34,6 +34,54 @@ use winapi::{
 static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 static INITIALIZED_OPEN_GL: SyncLazy<AtomicBool> = SyncLazy::new(|| AtomicBool::new(false));
 
+pub fn initialize() {
+    // Create module name
+    let module_name = OsStr::new("opengl32.dll\0")
+        .encode_wide()
+        .collect::<Vec<u16>>();
+
+    // Load module
+    let module = unsafe { LoadLibraryW(module_name.as_ptr()) };
+
+    if module.is_null() {
+        // TODO: Error handling
+        eprintln!(
+            "OpenGL module is null! (os error: {})",
+            io::Error::last_os_error()
+        );
+        return;
+    }
+}
+
+pub fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
+    // Create null-terminated function name
+    let null_terminated_function_name = CString::new(function_name).unwrap();
+
+    // Get address (via wglGetProcAddress)
+    let mut address = unsafe { wglGetProcAddress(null_terminated_function_name.as_ptr()) };
+
+    if address.is_null()
+        || address == 1 as PROC
+        || address == 2 as PROC
+        || address == 3 as PROC
+        || address == -1_isize as PROC
+    {
+        // Get address (via GetProcAddress)
+        address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
+    }
+
+    if address.is_null() {
+        // TODO: Error handling
+        eprintln!(
+            "OpenGL address ({}) is null! (os error: {})",
+            function_name,
+            io::Error::last_os_error()
+        );
+    }
+
+    address as *const std::ffi::c_void
+}
+
 pub fn create_window() -> Option<HWND> {
     // Create window class name
     let mut window_class_name = OsStr::new("KoalaChessWindowClass\0")
@@ -265,106 +313,4 @@ fn negotiate_pixel_format(device_context: HDC) {
             &suggested_pixel_format,
         );
     };
-}
-
-fn initialize_open_gl_addresses() {
-    // Create module name
-    let module_name = OsStr::new("opengl32.dll\0")
-        .encode_wide()
-        .collect::<Vec<u16>>();
-
-    // Load module
-    let module = unsafe { LoadLibraryW(module_name.as_ptr()) };
-
-    if module.is_null() {
-        // TODO: Error handling
-        eprintln!(
-            "OpenGL module is null! (os error: {})",
-            io::Error::last_os_error()
-        );
-        return;
-    }
-
-    // Get and assign addresses
-
-    // OpenGL <=1.1
-    let _ = gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GenTextures::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BindTexture::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::TexImage2D::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::TexParameteri::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::Enable::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
-
-    // OpenGL >1.1
-    let _ = gl::CreateShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::ShaderSource::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::CompileShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::CreateProgram::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::AttachShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::LinkProgram::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::DeleteShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::UseProgram::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetUniformLocation::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-    let _ = gl::Uniform1f::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetShaderiv::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetProgramiv::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::GetShaderInfoLog::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetProgramInfoLog::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-
-    let _ =
-        gl::GenVertexArrays::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GenBuffers::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::BindVertexArray::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BindBuffer::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BufferData::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::VertexAttribPointer::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-    let _ = gl::EnableVertexAttribArray::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-    let _ =
-        gl::GenerateMipmap::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::DrawElements::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BlendFunc::load_with(|function_name| get_open_gl_address(module, function_name));
-}
-
-fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
-    // Create null-terminated function name
-    let null_terminated_function_name = CString::new(function_name).unwrap();
-
-    // Get address (via wglGetProcAddress)
-    let mut address = unsafe { wglGetProcAddress(null_terminated_function_name.as_ptr()) };
-
-    if address.is_null()
-        || address == 1 as PROC
-        || address == 2 as PROC
-        || address == 3 as PROC
-        || address == -1_isize as PROC
-    {
-        // Get address (via GetProcAddress)
-        address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
-    }
-
-    if address.is_null() {
-        // TODO: Error handling
-        eprintln!(
-            "OpenGL address ({}) is null! (os error: {})",
-            function_name,
-            io::Error::last_os_error()
-        );
-    }
-
-    address as *const std::ffi::c_void
 }

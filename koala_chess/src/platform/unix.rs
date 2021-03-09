@@ -8,9 +8,41 @@ use x11::xlib;
 
 static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 
+pub fn initialize() {
+    let _ = glx::GetProcAddress::load_with(|function_name| unsafe {
+        // Create null-terminated function name
+        let null_terminated_function_name = CString::new(function_name).unwrap();
+
+        // TODO: Don't use the x11 library to get the address of GetProcAddress but rather something like this:
+        // https://stackoverflow.com/questions/38674176/manually-calling-opengl-functions
+        x11::glx::glXGetProcAddress(
+            null_terminated_function_name.as_ptr() as *const glx::types::GLubyte
+        )
+        .unwrap() as *const std::ffi::c_void
+    });
+}
+
+pub fn get_address(function_name: &str) -> *const std::ffi::c_void {
+    // Create null-terminated function name
+    let null_terminated_function_name = CString::new(function_name).unwrap();
+
+    let address = unsafe {
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetProcAddress.xml
+        glx::GetProcAddress(
+            null_terminated_function_name.as_ptr() as *const glx::types::GLubyte, // proc_name
+        )
+    };
+
+    if address.is_null() {
+        // TODO: Error handling
+        eprintln!("Address ({}) is null!", function_name);
+    }
+
+    address as *const std::ffi::c_void
+}
+
 pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
     initialize_glx_addresses();
-    initialize_open_gl_addresses();
 
     let display = unsafe {
         xlib::XOpenDisplay(
@@ -350,17 +382,6 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
 
 fn initialize_glx_addresses() {
     // Get and assign addresses
-    let _ = glx::GetProcAddress::load_with(|function_name| unsafe {
-        // Create null-terminated function name
-        let null_terminated_function_name = CString::new(function_name).unwrap();
-
-        // TODO: Don't use the x11 library to get the address of GetProcAddress but rather something like this:
-        // https://stackoverflow.com/questions/38674176/manually-calling-opengl-functions
-        x11::glx::glXGetProcAddress(
-            null_terminated_function_name.as_ptr() as *const glx::types::GLubyte
-        )
-        .unwrap() as *const std::ffi::c_void
-    });
     let _ = glx::QueryVersion::load_with(|function_name| get_address(function_name));
     let _ = glx::ChooseFBConfig::load_with(|function_name| get_address(function_name));
     let _ = glx::GetVisualFromFBConfig::load_with(|function_name| get_address(function_name));
@@ -371,71 +392,6 @@ fn initialize_glx_addresses() {
     let _ = glx::IsDirect::load_with(|function_name| get_address(function_name));
     let _ = glx::MakeCurrent::load_with(|function_name| get_address(function_name));
     let _ = glx::SwapBuffers::load_with(|function_name| get_address(function_name));
-}
-
-fn initialize_open_gl_addresses() {
-    // Get and assign addresses
-
-    // Get and assign addresses
-
-    // OpenGL <=1.1
-    let _ = gl::Viewport::load_with(|function_name| get_address(function_name));
-    let _ = gl::GenTextures::load_with(|function_name| get_address(function_name));
-    let _ = gl::BindTexture::load_with(|function_name| get_address(function_name));
-    let _ = gl::TexImage2D::load_with(|function_name| get_address(function_name));
-    let _ = gl::TexParameteri::load_with(|function_name| get_address(function_name));
-    let _ = gl::Enable::load_with(|function_name| get_address(function_name));
-    let _ = gl::ClearColor::load_with(|function_name| get_address(function_name));
-    let _ = gl::Clear::load_with(|function_name| get_address(function_name));
-
-    // OpenGL >1.1
-    let _ = gl::CreateShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::ShaderSource::load_with(|function_name| get_address(function_name));
-    let _ = gl::CompileShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::CreateProgram::load_with(|function_name| get_address(function_name));
-    let _ = gl::AttachShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::LinkProgram::load_with(|function_name| get_address(function_name));
-    let _ = gl::DeleteShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::UseProgram::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetUniformLocation::load_with(|function_name| get_address(function_name));
-    let _ = gl::Uniform1f::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetShaderiv::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetProgramiv::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetShaderInfoLog::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetProgramInfoLog::load_with(|function_name| get_address(function_name));
-
-    let _ = gl::GenVertexArrays::load_with(|function_name| get_address(function_name));
-    let _ = gl::GenBuffers::load_with(|function_name| get_address(function_name));
-    let _ = gl::BindVertexArray::load_with(|function_name| get_address(function_name));
-    let _ = gl::BindBuffer::load_with(|function_name| get_address(function_name));
-    let _ = gl::BufferData::load_with(|function_name| get_address(function_name));
-    let _ = gl::VertexAttribPointer::load_with(|function_name| get_address(function_name));
-    let _ = gl::EnableVertexAttribArray::load_with(|function_name| get_address(function_name));
-    let _ = gl::GenerateMipmap::load_with(|function_name| get_address(function_name));
-    let _ = gl::DrawElements::load_with(|function_name| get_address(function_name));
-    let _ = gl::BlendFunc::load_with(|function_name| get_address(function_name));
-
-    // Unix only
-    let _ = gl::GetString::load_with(|function_name| get_address(function_name));
-}
-
-fn get_address(function_name: &str) -> *const std::ffi::c_void {
-    // Create null-terminated function name
-    let null_terminated_function_name = CString::new(function_name).unwrap();
-
-    let address = unsafe {
-        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetProcAddress.xml
-        glx::GetProcAddress(
-            null_terminated_function_name.as_ptr() as *const glx::types::GLubyte, // proc_name
-        )
-    };
-
-    if address.is_null() {
-        // TODO: Error handling
-        eprintln!("Address ({}) is null!", function_name);
-    }
-
-    address as *const std::ffi::c_void
 }
 
 unsafe fn is_extension_supported(
