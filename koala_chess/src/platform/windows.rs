@@ -171,46 +171,6 @@ pub fn r#loop(window: HWND, game: Game) {
     }
 }
 
-unsafe extern "system" fn window_proc(
-    window: HWND,
-    message: UINT,
-    w_param: WPARAM,
-    l_param: LPARAM,
-) -> LRESULT {
-    match message {
-        WM_SIZE => {
-            println!("window_proc: WM_SIZE");
-            let mut rect = RECT::default();
-            GetClientRect(window, &mut rect);
-            let width = rect.right - rect.left;
-            let height = rect.bottom - rect.top;
-            let aspect_ratio = width as f32 / height as f32;
-            println!(
-                "WM_SIZE: width: {} / height: {} / aspect_ratio: {}",
-                width, height, aspect_ratio
-            );
-
-            *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
-
-            if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
-                // Set viewport
-                gl::Viewport(0, 0, width, height);
-            }
-        }
-        WM_DESTROY => {
-            println!("window_proc: WM_DESTROY");
-            PostQuitMessage(0);
-        }
-        WM_CLOSE => {
-            println!("window_proc: WM_CLOSE");
-            PostQuitMessage(0);
-        }
-        _ => (),
-    };
-
-    DefWindowProcW(window, message, w_param, l_param)
-}
-
 fn initialize_open_gl(window: HWND) {
     let device_context = unsafe { GetDC(window) };
 
@@ -367,4 +327,44 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
     }
 
     address as *const std::ffi::c_void
+}
+
+unsafe extern "system" fn window_proc(
+    window: HWND,
+    message: UINT,
+    w_param: WPARAM,
+    l_param: LPARAM,
+) -> LRESULT {
+    match message {
+        WM_SIZE => {
+            println!("window_proc: WM_SIZE");
+            let mut rect = RECT::default();
+            GetClientRect(window, &mut rect);
+            let width = rect.right - rect.left;
+            let height = rect.bottom - rect.top;
+            let aspect_ratio = width as f32 / height as f32;
+            println!(
+                "WM_SIZE: width: {} / height: {} / aspect_ratio: {}",
+                width, height, aspect_ratio
+            );
+
+            *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
+
+            if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
+                // Set viewport
+                gl::Viewport(0, 0, width, height);
+            }
+        }
+        WM_DESTROY => {
+            println!("window_proc: WM_DESTROY");
+            PostQuitMessage(0);
+        }
+        WM_CLOSE => {
+            println!("window_proc: WM_CLOSE");
+            PostQuitMessage(0);
+        }
+        _ => (),
+    };
+
+    DefWindowProcW(window, message, w_param, l_param)
 }
