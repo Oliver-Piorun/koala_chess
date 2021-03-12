@@ -13,7 +13,6 @@ pub fn initialize_open_gl_addresses(get_open_gl_address: fn(&str) -> *const std:
     let _ = gl::Viewport::load_with(|function_name| get_open_gl_address(function_name));
 
     // OpenGL >1.1
-
     let _ = gl::AttachShader::load_with(|function_name| get_open_gl_address(function_name));
     let _ = gl::BindBuffer::load_with(|function_name| get_open_gl_address(function_name));
     let _ = gl::BindVertexArray::load_with(|function_name| get_open_gl_address(function_name));
