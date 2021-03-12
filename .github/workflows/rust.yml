@@ -27,4 +27,8 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: koala_chess
-        path: target
+        path: |
+          target/release/koala_chess
+          shaders
+          textures/board.bmp
+          textures/pieces.bmp
