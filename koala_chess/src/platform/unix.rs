@@ -326,19 +326,16 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
                 gl::Viewport(0, 0, width, height);
             }
 
-            match event.get_type() {
-                xlib::ClientMessage => {
-                    let xclient = xlib::XClientMessageEvent::from(event);
+            if let xlib::ClientMessage = event.get_type() {
+                let xclient = xlib::XClientMessageEvent::from(event);
 
-                    if xclient.message_type == wm_protocols && xclient.format == 32 {
-                        let protocol = xclient.data.get_long(0) as xlib::Atom;
+                if xclient.message_type == wm_protocols && xclient.format == 32 {
+                    let protocol = xclient.data.get_long(0) as xlib::Atom;
 
-                        if protocol == wm_delete_window {
-                            break;
-                        }
+                    if protocol == wm_delete_window {
+                        break;
                     }
                 }
-                _ => (),
             }
 
             // Draw game
