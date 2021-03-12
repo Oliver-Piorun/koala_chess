@@ -24,7 +24,7 @@ jobs:
     - name: Build
       run: cargo build --release
     - name: Upload build artifact
-      uses: actions/upload-artifact@2
+      uses: actions/upload-artifact@v2
       with:
         name: koala_chess
         path: target
