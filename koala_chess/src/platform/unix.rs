@@ -1,4 +1,5 @@
 use crate::game::Game;
+use crate::renderer::open_gl;
 use crate::traits::Draw;
 use std::ffi::{c_void, CStr, CString};
 use std::lazy::SyncLazy;
@@ -10,7 +11,7 @@ static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 
 pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
     initialize_glx_addresses();
-    initialize_open_gl_addresses();
+    open_gl::initialize_open_gl_addresses(get_address);
 
     let display = unsafe {
         xlib::XOpenDisplay(
@@ -325,19 +326,16 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
                 gl::Viewport(0, 0, width, height);
             }
 
-            match event.get_type() {
-                xlib::ClientMessage => {
-                    let xclient = xlib::XClientMessageEvent::from(event);
+            if let xlib::ClientMessage = event.get_type() {
+                let xclient = xlib::XClientMessageEvent::from(event);
 
-                    if xclient.message_type == wm_protocols && xclient.format == 32 {
-                        let protocol = xclient.data.get_long(0) as xlib::Atom;
+                if xclient.message_type == wm_protocols && xclient.format == 32 {
+                    let protocol = xclient.data.get_long(0) as xlib::Atom;
 
-                        if protocol == wm_delete_window {
-                            break;
-                        }
+                    if protocol == wm_delete_window {
+                        break;
                     }
                 }
-                _ => (),
             }
 
             // Draw game
@@ -371,52 +369,6 @@ fn initialize_glx_addresses() {
     let _ = glx::IsDirect::load_with(|function_name| get_address(function_name));
     let _ = glx::MakeCurrent::load_with(|function_name| get_address(function_name));
     let _ = glx::SwapBuffers::load_with(|function_name| get_address(function_name));
-}
-
-fn initialize_open_gl_addresses() {
-    // Get and assign addresses
-
-    // Get and assign addresses
-
-    // OpenGL <=1.1
-    let _ = gl::Viewport::load_with(|function_name| get_address(function_name));
-    let _ = gl::GenTextures::load_with(|function_name| get_address(function_name));
-    let _ = gl::BindTexture::load_with(|function_name| get_address(function_name));
-    let _ = gl::TexImage2D::load_with(|function_name| get_address(function_name));
-    let _ = gl::TexParameteri::load_with(|function_name| get_address(function_name));
-    let _ = gl::Enable::load_with(|function_name| get_address(function_name));
-    let _ = gl::ClearColor::load_with(|function_name| get_address(function_name));
-    let _ = gl::Clear::load_with(|function_name| get_address(function_name));
-
-    // OpenGL >1.1
-    let _ = gl::CreateShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::ShaderSource::load_with(|function_name| get_address(function_name));
-    let _ = gl::CompileShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::CreateProgram::load_with(|function_name| get_address(function_name));
-    let _ = gl::AttachShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::LinkProgram::load_with(|function_name| get_address(function_name));
-    let _ = gl::DeleteShader::load_with(|function_name| get_address(function_name));
-    let _ = gl::UseProgram::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetUniformLocation::load_with(|function_name| get_address(function_name));
-    let _ = gl::Uniform1f::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetShaderiv::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetProgramiv::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetShaderInfoLog::load_with(|function_name| get_address(function_name));
-    let _ = gl::GetProgramInfoLog::load_with(|function_name| get_address(function_name));
-
-    let _ = gl::GenVertexArrays::load_with(|function_name| get_address(function_name));
-    let _ = gl::GenBuffers::load_with(|function_name| get_address(function_name));
-    let _ = gl::BindVertexArray::load_with(|function_name| get_address(function_name));
-    let _ = gl::BindBuffer::load_with(|function_name| get_address(function_name));
-    let _ = gl::BufferData::load_with(|function_name| get_address(function_name));
-    let _ = gl::VertexAttribPointer::load_with(|function_name| get_address(function_name));
-    let _ = gl::EnableVertexAttribArray::load_with(|function_name| get_address(function_name));
-    let _ = gl::GenerateMipmap::load_with(|function_name| get_address(function_name));
-    let _ = gl::DrawElements::load_with(|function_name| get_address(function_name));
-    let _ = gl::BlendFunc::load_with(|function_name| get_address(function_name));
-
-    // Unix only
-    let _ = gl::GetString::load_with(|function_name| get_address(function_name));
 }
 
 fn get_address(function_name: &str) -> *const std::ffi::c_void {

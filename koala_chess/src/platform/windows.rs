@@ -1,4 +1,5 @@
 use crate::game::Game;
+use crate::renderer::open_gl;
 use crate::traits::Draw;
 use std::ffi::{CString, OsStr};
 use std::io;
@@ -31,8 +32,15 @@ use winapi::{
     },
 };
 
-static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
+struct ModuleHandle(HMODULE);
+
+// Implement Send for the HMODULE wrapper, because HMODULE does not implement it
+unsafe impl Send for ModuleHandle {}
+
+static OPEN_GL_MODULE: SyncLazy<Mutex<ModuleHandle>> =
+    SyncLazy::new(|| Mutex::new(ModuleHandle(std::ptr::null_mut())));
 static INITIALIZED_OPEN_GL: SyncLazy<AtomicBool> = SyncLazy::new(|| AtomicBool::new(false));
+static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 
 pub fn create_window() -> Option<HWND> {
     // Create window class name
@@ -245,62 +253,12 @@ fn initialize_open_gl_addresses() {
         return;
     }
 
-    // Get and assign addresses
+    *OPEN_GL_MODULE.lock().unwrap() = ModuleHandle(module);
 
-    // OpenGL <=1.1
-    let _ = gl::Viewport::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GenTextures::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BindTexture::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::TexImage2D::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::TexParameteri::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::Enable::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::ClearColor::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::Clear::load_with(|function_name| get_open_gl_address(module, function_name));
-
-    // OpenGL >1.1
-    let _ = gl::CreateShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::ShaderSource::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::CompileShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::CreateProgram::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::AttachShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::LinkProgram::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::DeleteShader::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::UseProgram::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetUniformLocation::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-    let _ = gl::Uniform1f::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetShaderiv::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetProgramiv::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::GetShaderInfoLog::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GetProgramInfoLog::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-
-    let _ =
-        gl::GenVertexArrays::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::GenBuffers::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ =
-        gl::BindVertexArray::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BindBuffer::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BufferData::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::VertexAttribPointer::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-    let _ = gl::EnableVertexAttribArray::load_with(|function_name| {
-        get_open_gl_address(module, function_name)
-    });
-    let _ =
-        gl::GenerateMipmap::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::DrawElements::load_with(|function_name| get_open_gl_address(module, function_name));
-    let _ = gl::BlendFunc::load_with(|function_name| get_open_gl_address(module, function_name));
+    open_gl::initialize_open_gl_addresses(get_open_gl_address)
 }
 
-fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi::c_void {
+fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
     let null_terminated_function_name = CString::new(function_name).unwrap();
 
@@ -314,7 +272,12 @@ fn get_open_gl_address(module: HMODULE, function_name: &str) -> *const std::ffi:
         || address == -1_isize as PROC
     {
         // Get address (via GetProcAddress)
-        address = unsafe { GetProcAddress(module, null_terminated_function_name.as_ptr()) };
+        address = unsafe {
+            GetProcAddress(
+                OPEN_GL_MODULE.lock().unwrap().0,
+                null_terminated_function_name.as_ptr(),
+            )
+        };
     }
 
     if address.is_null() {
