@@ -12,9 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install OpenGL libraries
-      run: |
-        sudo apt-get install mesa-utils
-        sudo apt-get install freeglut3-dev
+      run: sudo apt-get install freeglut3-dev
     - name: Install latest nightly
       uses: actions-rs/toolchain@v1
       with:
