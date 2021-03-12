@@ -26,8 +26,8 @@ jobs:
     - name: Copy shaders and textures
       run: |
         cp -r shaders target/release/shaders
-        cp textures/board.bmp target/release/textures/board.bmp
-        cp textures/pieces.bmp target/release/textures/pieces.bmp
+        cp --parents textures/board.bmp target/release
+        cp --parents textures/pieces.bmp target/release
     - name: Upload build artifact
       uses: actions/upload-artifact@v2
       with:
