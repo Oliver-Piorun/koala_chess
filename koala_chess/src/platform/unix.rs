@@ -1,4 +1,5 @@
 use crate::game::Game;
+use crate::renderer::open_gl;
 use crate::traits::Draw;
 use std::ffi::{c_void, CStr, CString};
 use std::lazy::SyncLazy;
@@ -10,7 +11,7 @@ static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 
 pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
     initialize_glx_addresses();
-    open_gl::initialize_open_gl_addresses();
+    open_gl::initialize_open_gl_addresses(get_address);
 
     let display = unsafe {
         xlib::XOpenDisplay(
