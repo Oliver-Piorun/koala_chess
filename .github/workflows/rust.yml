@@ -19,9 +19,9 @@ jobs:
         toolchain: nightly
         override: true
         components: clippy
-    - name: Check
+    - name: Check (clippy)
       uses: actions-rs/cargo@v1
       with:
-        command: check
+        command: clippy
     - name: Build
       run: cargo build --verbose
