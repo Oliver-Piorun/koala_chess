@@ -23,12 +23,16 @@ jobs:
       run: cargo clippy
     - name: Build
       run: cargo build --release
+    - name: Copy shaders and textures
+      run: |
+        cp -r shaders target/release/shaders
+        cp textures/board.bmp target/release/textures/board.bmp
+        cp textures/pieces.bmp target/release/textures/pieces.bmp
     - name: Upload build artifact
       uses: actions/upload-artifact@v2
       with:
         name: koala_chess
         path: |
           target/release/koala_chess
-          shaders
-          textures/board.bmp
-          textures/pieces.bmp
+          target/release/shaders
+          target/release/textures
