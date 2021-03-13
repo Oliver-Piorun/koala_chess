@@ -3,8 +3,9 @@
 
 A 2D chess game written in [Rust](https://www.rust-lang.org).
 
-\
-Attention: This game is currently heavily in development :construction:
+<h1>
+
+**Attention:** This game is currently heavily in development :construction:
 
 Feel free to build it from source until a playable version is being released! :blush:
 
