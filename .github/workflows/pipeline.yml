@@ -23,9 +23,10 @@ jobs:
         run: cargo build --release
       - name: Copy shaders and textures
         run: |
-          robocopy shaders target/release/shaders
-          robocopy textures target/release/textures board.bmp
-          robocopy textures target/release/textures pieces.bmp
+          cp -r shaders target/release
+          mkdir target/release/textures
+          cp textures/board.bmp target/release/textures
+          cp textures/pieces.bmp target/release/textures
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
