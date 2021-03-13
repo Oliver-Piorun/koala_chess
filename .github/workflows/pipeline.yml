@@ -7,16 +7,39 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
+  windows_build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: clippy
+      - name: Check (clippy)
+        run: cargo clippy
+      - name: Build
+        run: cargo build --release
+      - name: Copy shaders and textures
+        run: |
+          robocopy shaders target/release/shaders
+          robocopy textures target/release/textures board.bmp
+          robocopy textures target/release/textures pieces.bmp
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: koala_chess
+          path: |
+            target/release/koala_chess
+            target/release/shaders
+            target/release/textures
+  linux_build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Install OpenGL libraries
         run: sudo apt-get install freeglut3-dev
-        if: matrix.os == 'ubuntu-latest'
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
