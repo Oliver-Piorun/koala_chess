@@ -30,9 +30,9 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: koala_chess
+          name: koala_chess_windows
           path: |
-            target/release/koala_chess
+            target/release/koala_chess.exe
             target/release/shaders
             target/release/textures
   linux_build:
@@ -59,7 +59,7 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: koala_chess
+          name: koala_chess_linux
           path: |
             target/release/koala_chess
             target/release/shaders
