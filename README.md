@@ -30,8 +30,6 @@ Feel free to build it from source until a playable version is being released! :b
 
 ## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
 
----
-
 ### Used development tools
 - [Visual Studio Code (website)](https://code.visualstudio.com)
 - [Paint.NET (website)](https://www.getpaint.net)
