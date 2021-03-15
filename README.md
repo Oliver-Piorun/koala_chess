@@ -36,3 +36,5 @@ Feel free to build it from source until a playable version is being released! :b
 
 ### Inspired by
 - [Handmade Hero (website)](https://handmadehero.org)
+- [Casey Muratori (twitter)](https://twitter.com/cmuratori)
+- [Jonathan Blow (twitter)](https://twitter.com/jonathan_blow)
