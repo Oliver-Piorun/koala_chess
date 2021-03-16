@@ -27,7 +27,7 @@ impl Shader {
 
             gl::CompileShader(vertex_shader);
 
-            check_for_shader_errors(vertex_shader);
+            check_for_shader_errors(vertex_shader, vertex_shader_path);
 
             // Fragment shader
             let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
@@ -41,7 +41,7 @@ impl Shader {
 
             gl::CompileShader(fragment_shader);
 
-            check_for_shader_errors(fragment_shader);
+            check_for_shader_errors(fragment_shader, fragment_shader_path);
 
             // Program
             let program = gl::CreateProgram();
@@ -88,14 +88,14 @@ impl Shader {
     }
 }
 
-fn check_for_shader_errors(shader: gl::types::GLuint) {
+fn check_for_shader_errors(shader: gl::types::GLuint, shader_path: &str) {
     let mut success: gl::types::GLint = 0;
 
     unsafe {
         gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
     }
 
-    logger::info!("Shader compile status: {}", success);
+    logger::info!("Shader compile status: {} ({})", success, shader_path);
 
     if success == 0 {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
@@ -112,7 +112,7 @@ fn check_for_shader_errors(shader: gl::types::GLuint) {
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
         let log_str = log_cstr.to_str().unwrap();
 
-        logger::error!("Shader compile error: {}", log_str);
+        logger::error!("Shader compile error: {} ({})", log_str, shader_path);
     }
 }
 
