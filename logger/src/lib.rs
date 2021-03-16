@@ -90,7 +90,7 @@ lazy_static! {
             .create(true)
             .write(true)
             .truncate(true)
-            .open("java_agent.log")
+            .open("koala_chess.log")
             .unwrap()
     );
 }

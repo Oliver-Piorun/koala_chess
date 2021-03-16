@@ -1,3 +1,4 @@
+use logger::*;
 use std::fs::read_to_string;
 
 #[derive(Copy, Clone)]
@@ -73,9 +74,10 @@ impl Shader {
 
         if uniform_location == -1 {
             // TODO: Error handling
-            eprintln!(
+            logger::error!(
                 "Could not get uniform location! (name: {}, value: {})",
-                name, value
+                name,
+                value
             );
             return;
         }
@@ -93,7 +95,7 @@ fn check_for_shader_errors(shader: gl::types::GLuint) {
         gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
     }
 
-    println!("Shader compile status: {}", success);
+    logger::info!("Shader compile status: {}", success);
 
     if success == 0 {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
@@ -110,7 +112,7 @@ fn check_for_shader_errors(shader: gl::types::GLuint) {
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
         let log_str = log_cstr.to_str().unwrap();
 
-        println!("Shader compile error: {}", log_str);
+        logger::error!("Shader compile error: {}", log_str);
     }
 }
 
@@ -121,7 +123,7 @@ fn check_for_program_errors(program: gl::types::GLuint) {
         gl::GetProgramiv(program, gl::LINK_STATUS, &mut success);
     }
 
-    println!("Shader program link status: {}", success);
+    logger::info!("Shader program link status: {}", success);
 
     if success == 0 {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
@@ -138,6 +140,6 @@ fn check_for_program_errors(program: gl::types::GLuint) {
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
         let log_str = log_cstr.to_str().unwrap();
 
-        println!("Shader program link error: {}", log_str);
+        logger::error!("Shader program link error: {}", log_str);
     }
 }

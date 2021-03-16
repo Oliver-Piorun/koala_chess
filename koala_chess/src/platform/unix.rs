@@ -21,7 +21,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
 
     if display.is_null() {
         // TODO: Error handling
-        eprintln!("Could not open display!");
+        logger::error!("Could not open display!");
         return None;
     }
 
@@ -37,7 +37,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
         );
     }
 
-    println!("GLX version: {}.{}", major_glx, minor_glx);
+    logger::info!("GLX version: {}.{}", major_glx, minor_glx);
 
     unsafe {
         // Reference: https://tronche.com/gui/x/xlib/display/display-macros.html#DefaultScreen
@@ -80,7 +80,9 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
 
         if framebuffer_count == 0 {
             // TODO: Error handling
-            eprintln!("Could not get a framebuffer config which matches the specified attributes!");
+            logger::error!(
+                "Could not get a framebuffer config which matches the specified attributes!"
+            );
             return None;
         }
 
@@ -129,7 +131,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
 
         if best_framebuffer_config_index.is_none() {
             // Error handling
-            eprintln!("Could not find the best framebuffer config!");
+            logger::error!("Could not find the best framebuffer config!");
             return None;
         }
 
@@ -149,7 +151,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
 
         if visual_info.is_null() {
             // TODO: Error handling
-            eprintln!("Could not get a visual info from the framebuffer config!");
+            logger::error!("Could not get a visual info from the framebuffer config!");
             return None;
         }
 
@@ -188,7 +190,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
 
         if context.is_null() {
             // TODO: Error handling
-            eprintln!("Could not create a context!");
+            logger::error!("Could not create a context!");
             return None;
         }
 
@@ -207,7 +209,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
         ) == false as glx::types::Bool
         {
             // TODO: Error handling
-            eprintln!("Created context is not a direct context!");
+            logger::error!("Created context is not a direct context!");
             return None;
         }
 
@@ -251,15 +253,15 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
 
         let vendor_cstr = CStr::from_ptr(gl::GetString(gl::VENDOR) as *mut i8);
         let vendor = vendor_cstr.to_str().unwrap();
-        println!("GL vendor: {}", vendor);
+        logger::info!("GL vendor: {}", vendor);
 
         let renderer_cstr = CStr::from_ptr(gl::GetString(gl::RENDERER) as *mut i8);
         let renderer = renderer_cstr.to_str().unwrap();
-        println!("GL renderer: {}", renderer);
+        logger::info!("GL renderer: {}", renderer);
 
         let version_cstr = CStr::from_ptr(gl::GetString(gl::VERSION) as *mut i8);
         let version = version_cstr.to_str().unwrap();
-        println!("GL version: {}", version);
+        logger::info!("GL version: {}", version);
 
         // Create window name
         let window_name = CString::new("Koala chess").unwrap();
@@ -315,9 +317,11 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
                 let width = attributes.width;
                 let height = attributes.height;
                 let aspect_ratio = width as f32 / height as f32;
-                println!(
+                logger::info!(
                     "Expose: width: {} / height: {} / aspect_ratio: {}",
-                    width, height, aspect_ratio
+                    width,
+                    height,
+                    aspect_ratio
                 );
 
                 *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
@@ -384,7 +388,7 @@ fn get_address(function_name: &str) -> *const std::ffi::c_void {
 
     if address.is_null() {
         // TODO: Error handling
-        eprintln!("Address ({}) is null!", function_name);
+        logger::error!("Address ({}) is null!", function_name);
     }
 
     address as *const std::ffi::c_void

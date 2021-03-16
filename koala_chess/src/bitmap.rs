@@ -1,3 +1,4 @@
+use logger::*;
 use std::{
     fs::File,
     io::{Read, Seek, SeekFrom},
@@ -110,9 +111,11 @@ pub fn load_bitmap(path: &str) -> Bitmap {
     file.seek(SeekFrom::Start(data_offset.into())).unwrap();
     file.read_exact(&mut data).unwrap();
 
-    println!(
+    logger::info!(
         "Loaded bitmap: {} / width: {} / height: {}",
-        path, width, height
+        path,
+        width,
+        height
     );
 
     Bitmap::new(file_header, information_header, data)

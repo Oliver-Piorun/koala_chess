@@ -1,6 +1,7 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
 use crate::traits::Draw;
+use logger::*;
 use std::ffi::{CString, OsStr};
 use std::io;
 use std::lazy::SyncLazy;
@@ -70,7 +71,7 @@ pub fn create_window() -> Option<HWND> {
 
     if error_code == 0 {
         // TODO: Error handling
-        eprintln!(
+        logger::error!(
             "Could not register window class! (os error: {})",
             io::Error::last_os_error()
         );
@@ -105,7 +106,7 @@ pub fn create_window() -> Option<HWND> {
 
     if window.is_null() {
         // TODO: Error handling
-        eprintln!(
+        logger::error!(
             "Could not create window! (os error: {})",
             io::Error::last_os_error()
         );
@@ -136,7 +137,7 @@ pub fn r#loop(window: HWND, game: Game) {
         // Window loop
         while unsafe { PeekMessageW(&mut message, std::ptr::null_mut(), 0, 0, PM_REMOVE) } != 0 {
             if message.message == WM_QUIT {
-                println!("window_proc: WM_QUIT");
+                logger::info!("window_proc: WM_QUIT");
                 running = false;
                 break;
             }
@@ -188,7 +189,7 @@ fn initialize_open_gl(window: HWND) {
 
     if unsafe { wglMakeCurrent(device_context, rendering_context) } == 0 {
         // TODO: Error handling
-        eprintln!("wglMakeCurrent failed!");
+        logger::error!("wglMakeCurrent failed!");
     }
 
     unsafe { ReleaseDC(window, device_context) };
@@ -246,7 +247,7 @@ fn initialize_open_gl_addresses() {
 
     if module.is_null() {
         // TODO: Error handling
-        eprintln!(
+        logger::error!(
             "OpenGL module is null! (os error: {})",
             io::Error::last_os_error()
         );
@@ -282,7 +283,7 @@ fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
 
     if address.is_null() {
         // TODO: Error handling
-        eprintln!(
+        logger::error!(
             "OpenGL address ({}) is null! (os error: {})",
             function_name,
             io::Error::last_os_error()
@@ -300,15 +301,17 @@ unsafe extern "system" fn window_proc(
 ) -> LRESULT {
     match message {
         WM_SIZE => {
-            println!("window_proc: WM_SIZE");
+            logger::info!("window_proc: WM_SIZE");
             let mut rect = RECT::default();
             GetClientRect(window, &mut rect);
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
             let aspect_ratio = width as f32 / height as f32;
-            println!(
+            logger::info!(
                 "WM_SIZE: width: {} / height: {} / aspect_ratio: {}",
-                width, height, aspect_ratio
+                width,
+                height,
+                aspect_ratio
             );
 
             *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
@@ -319,11 +322,11 @@ unsafe extern "system" fn window_proc(
             }
         }
         WM_DESTROY => {
-            println!("window_proc: WM_DESTROY");
+            logger::info!("window_proc: WM_DESTROY");
             PostQuitMessage(0);
         }
         WM_CLOSE => {
-            println!("window_proc: WM_CLOSE");
+            logger::info!("window_proc: WM_CLOSE");
             PostQuitMessage(0);
         }
         _ => (),
