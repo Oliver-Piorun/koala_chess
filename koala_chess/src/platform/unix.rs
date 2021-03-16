@@ -1,6 +1,7 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
 use crate::traits::Draw;
+use logger::*;
 use std::ffi::{c_void, CStr, CString};
 use std::lazy::SyncLazy;
 use std::os::raw::{c_int, c_uint};
