@@ -2,7 +2,8 @@
 members = [
     "gl",
     "glx",
-    "koala_chess"
+    "koala_chess",
+    "logger"
 ]
 
 [profile.release]
