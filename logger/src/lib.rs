@@ -109,7 +109,11 @@ pub fn log(file: &str, line: u32, log_level: LogLevel, message: String) {
     let global_log_level = LOG_LEVEL.lock().unwrap();
 
     if log_level >= *global_log_level {
-        println!("{}", formatted_message);
+        if log_level != LogLevel::Error {
+            println!("{}", formatted_message);
+        } else {
+            eprintln!("{}", formatted_message);
+        }
     }
 }
 
