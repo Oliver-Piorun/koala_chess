@@ -1,12 +1,14 @@
+// For SyncLazy
+#![feature(once_cell)]
+
 mod log_level;
 
 use chrono::offset::Local;
 use chrono::DateTime;
-use lazy_static::lazy_static;
 pub use log_level::LogLevel;
-use std::fs::File;
 use std::sync::Mutex;
 use std::time::SystemTime;
+use std::{fs::File, lazy::SyncLazy};
 use std::{fs::OpenOptions, io::Write};
 
 #[macro_export]
@@ -83,17 +85,17 @@ macro_rules! log_fatal {
     };
 }
 
-lazy_static! {
-    pub static ref LOG_LEVEL: Mutex<LogLevel> = Mutex::new(LogLevel::Trace);
-    static ref FILE: Mutex<File> = Mutex::new(
+pub static LOG_LEVEL: SyncLazy<Mutex<LogLevel>> = SyncLazy::new(|| Mutex::new(LogLevel::Trace));
+static FILE: SyncLazy<Mutex<File>> = SyncLazy::new(|| {
+    Mutex::new(
         OpenOptions::new()
             .create(true)
             .write(true)
             .truncate(true)
             .open("koala_chess.log")
-            .unwrap()
-    );
-}
+            .unwrap(),
+    )
+});
 
 pub fn set_log_level(log_level: LogLevel) {
     *LOG_LEVEL.lock().unwrap() = log_level;
