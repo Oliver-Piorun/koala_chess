@@ -147,13 +147,14 @@ pub fn r#loop(window: HWND, game: Game) {
 
         // Rendering
         unsafe {
+            let aspect_ratio_mutex = *ASPECT_RATIO
+                .lock()
+                .unwrap_or_else(|e| logger::fatal!("Could not lock aspect ratio mutex! ({})", e));
+
             // Draw game
-            game.draw(
-                *ASPECT_RATIO.lock().unwrap_or_else(|e| {
-                    logger::fatal!("Could not lock aspect ratio mutex! ({})", e)
-                }),
-            )
-            .unwrap();
+            if let Err(e) = game.draw(aspect_ratio_mutex) {
+                logger::error!("{}", e);
+            }
 
             SwapBuffers(device_context);
         }

@@ -3,6 +3,7 @@ use std::error::Error;
 use crate::piece::{Piece, PieceColor, PieceKind};
 use crate::traits::Draw;
 use crate::{board::Board, shader};
+use logger::*;
 
 pub struct Game {
     pub board: Board,
@@ -85,8 +86,10 @@ impl Game {
 
     pub fn initialize() {
         // Create shaders
-        let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag").unwrap();
-        let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag").unwrap();
+        let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag")
+            .unwrap_or_else(|e| logger::fatal!("{}", e));
+        let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag")
+            .unwrap_or_else(|e| logger::fatal!("{}", e));
 
         let mut vertex_array_object: gl::types::GLuint = 0;
         let mut element_buffer_object: gl::types::GLuint = 0;

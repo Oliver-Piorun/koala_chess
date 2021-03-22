@@ -1,7 +1,7 @@
 use logger::*;
 use std::{
     fs::File,
-    io::{Read, Seek, SeekFrom},
+    io::{self, Read, Seek, SeekFrom},
 };
 
 #[derive(Default)]
@@ -73,21 +73,21 @@ impl InformationHeader {
     }
 }
 
-pub fn load_bitmap(path: &str) -> Bitmap {
-    let mut file = File::open(path).unwrap();
-    let r#type = read_u16(&file);
-    let file_size = read_u32(&file);
-    let reserved_1 = read_u16(&file);
-    let reserved_2 = read_u16(&file);
-    let data_offset = read_u32(&file);
+pub fn load_bitmap(path: &str) -> io::Result<Bitmap> {
+    let mut file = File::open(path)?;
+    let r#type = read_u16(&file)?;
+    let file_size = read_u32(&file)?;
+    let reserved_1 = read_u16(&file)?;
+    let reserved_2 = read_u16(&file)?;
+    let data_offset = read_u32(&file)?;
 
     let file_header = FileHeader::new(r#type, file_size, reserved_1, reserved_2, data_offset);
 
-    let information_header_size = read_u32(&file);
-    let width = read_i32(&file);
-    let height = read_i32(&file);
-    let number_of_color_planes = read_u16(&file);
-    let number_of_bits_per_pixel = read_u16(&file);
+    let information_header_size = read_u32(&file)?;
+    let width = read_i32(&file)?;
+    let height = read_i32(&file)?;
+    let number_of_color_planes = read_u16(&file)?;
+    let number_of_bits_per_pixel = read_u16(&file)?;
 
     // We are currently using bitmaps with a BITMAPV5HEADER (124 bytes)
     // But we support all information headers which are based on the BITMAPINFOHEADER (40 bytes)
@@ -108,8 +108,8 @@ pub fn load_bitmap(path: &str) -> Bitmap {
     );
 
     let mut data = vec![0; (width * height * (number_of_bits_per_pixel / 8) as i32) as usize];
-    file.seek(SeekFrom::Start(data_offset.into())).unwrap();
-    file.read_exact(&mut data).unwrap();
+    file.seek(SeekFrom::Start(data_offset.into()))?;
+    file.read_exact(&mut data)?;
 
     logger::info!(
         "Loaded bitmap: {} / width: {} / height: {}",
@@ -118,26 +118,26 @@ pub fn load_bitmap(path: &str) -> Bitmap {
         height
     );
 
-    Bitmap::new(file_header, information_header, data)
+    Ok(Bitmap::new(file_header, information_header, data))
 }
 
-fn read_u16(mut file: &File) -> u16 {
+fn read_u16(mut file: &File) -> io::Result<u16> {
     let mut buffer = [0; 2];
-    file.read_exact(&mut buffer).unwrap();
+    file.read_exact(&mut buffer)?;
 
-    u16::from_le_bytes(buffer)
+    Ok(u16::from_le_bytes(buffer))
 }
 
-fn read_u32(mut file: &File) -> u32 {
+fn read_u32(mut file: &File) -> io::Result<u32> {
     let mut buffer = [0; 4];
-    file.read_exact(&mut buffer).unwrap();
+    file.read_exact(&mut buffer)?;
 
-    u32::from_le_bytes(buffer)
+    Ok(u32::from_le_bytes(buffer))
 }
 
-fn read_i32(mut file: &File) -> i32 {
+fn read_i32(mut file: &File) -> io::Result<i32> {
     let mut buffer = [0; 4];
-    file.read_exact(&mut buffer).unwrap();
+    file.read_exact(&mut buffer)?;
 
-    i32::from_le_bytes(buffer)
+    Ok(i32::from_le_bytes(buffer))
 }

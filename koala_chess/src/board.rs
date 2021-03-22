@@ -19,7 +19,8 @@ impl Board {
             Some(shader);
 
         // Load bitmap
-        let bitmap = bitmap::load_bitmap("textures/board.bmp");
+        let bitmap = bitmap::load_bitmap("textures/board.bmp")
+            .unwrap_or_else(|e| logger::fatal!("Could not load board bitmap! ({})", e));
 
         #[rustfmt::skip]
         let vertices: [f32; 32] = [
@@ -141,7 +142,7 @@ impl Draw for Board {
             .lock()
             .unwrap_or_else(|e| logger::fatal!("Could not lock shader mutex! ({})", e));
         let shader =
-            shader_mutex.unwrap_or_else(|| logger::fatal!("Shader has not been initialized!"));
+            shader_mutex.unwrap_or_else(|| logger::fatal!("Shader has not been initialized yet!"));
         shader.r#use();
         shader.set_float("aspect_ratio\0", aspect_ratio)?;
 
