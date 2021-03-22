@@ -15,7 +15,7 @@ use game::Game;
 #[cfg(target_family = "windows")]
 fn main() {
     // Create the window
-    let window = platform::windows::create_window().unwrap();
+    let window = platform::windows::create_window();
 
     // Initialize the game
     Game::initialize();

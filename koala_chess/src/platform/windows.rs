@@ -43,7 +43,7 @@ static OPEN_GL_MODULE: SyncLazy<Mutex<ModuleHandle>> =
 static INITIALIZED_OPEN_GL: SyncLazy<AtomicBool> = SyncLazy::new(|| AtomicBool::new(false));
 static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 
-pub fn create_window() -> Option<HWND> {
+pub fn create_window() -> HWND {
     // Create window class name
     let mut window_class_name = OsStr::new("KoalaChessWindowClass\0")
         .encode_wide()
@@ -112,7 +112,7 @@ pub fn create_window() -> Option<HWND> {
     // Initialize OpenGL
     initialize_open_gl(window);
 
-    Some(window)
+    window
 }
 
 pub fn r#loop(window: HWND, game: Game) {
