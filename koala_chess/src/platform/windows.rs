@@ -70,12 +70,10 @@ pub fn create_window() -> Option<HWND> {
     }
 
     if error_code == 0 {
-        // TODO: Error handling
-        logger::error!(
+        logger::fatal!(
             "Could not register window class! (os error: {})",
             io::Error::last_os_error()
         );
-        return None;
     }
 
     // Create window name
@@ -105,12 +103,10 @@ pub fn create_window() -> Option<HWND> {
     }
 
     if window.is_null() {
-        // TODO: Error handling
-        logger::error!(
+        logger::fatal!(
             "Could not create window! (os error: {})",
             io::Error::last_os_error()
         );
-        return None;
     }
 
     // Initialize OpenGL
@@ -152,7 +148,11 @@ pub fn r#loop(window: HWND, game: Game) {
         // Rendering
         unsafe {
             // Draw game
-            game.draw(*ASPECT_RATIO.lock().unwrap());
+            game.draw(
+                *ASPECT_RATIO
+                    .lock()
+                    .expect("Could not lock aspect ratio mutex!"),
+            );
 
             SwapBuffers(device_context);
         }
@@ -183,13 +183,23 @@ pub fn r#loop(window: HWND, game: Game) {
 fn initialize_open_gl(window: HWND) {
     let device_context = unsafe { GetDC(window) };
 
+    if device_context.is_null() {
+        logger::fatal!("Could not get device context!");
+    }
+
     negotiate_pixel_format(device_context);
 
     let rendering_context = unsafe { wglCreateContext(device_context) };
 
+    if rendering_context.is_null() {
+        logger::fatal!("Could not create OpenGL rendering context!");
+    }
+
     if unsafe { wglMakeCurrent(device_context, rendering_context) } == 0 {
-        // TODO: Error handling
-        logger::error!("wglMakeCurrent failed!");
+        logger::fatal!(
+            "wglMakeCurrent failed! (os error: {})",
+            io::Error::last_os_error()
+        );
     }
 
     unsafe { ReleaseDC(window, device_context) };
@@ -220,19 +230,41 @@ fn negotiate_pixel_format(device_context: HDC) {
 
     let suggested_pixel_format_index =
         unsafe { ChoosePixelFormat(device_context, &desired_pixel_format) };
+
+    if suggested_pixel_format_index == 0 {
+        logger::fatal!(
+            "Could not choose pixel format! (os error: {})",
+            io::Error::last_os_error()
+        );
+    }
+
     let mut suggested_pixel_format = PIXELFORMATDESCRIPTOR::default();
+
     unsafe {
-        DescribePixelFormat(
+        if DescribePixelFormat(
             device_context,
             suggested_pixel_format_index,
             std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as UINT,
             &mut suggested_pixel_format,
-        );
-        SetPixelFormat(
+        ) == 0
+        {
+            logger::fatal!(
+                "Could not get pixel format description! (os error: {})",
+                io::Error::last_os_error()
+            );
+        }
+
+        if SetPixelFormat(
             device_context,
             suggested_pixel_format_index,
             &suggested_pixel_format,
-        );
+        ) == 0
+        {
+            logger::fatal!(
+                "Could not set pixel format! (os error: {})",
+                io::Error::last_os_error()
+            );
+        }
     };
 }
 
@@ -246,22 +278,24 @@ fn initialize_open_gl_addresses() {
     let module = unsafe { LoadLibraryW(module_name.as_ptr()) };
 
     if module.is_null() {
-        // TODO: Error handling
-        logger::error!(
-            "OpenGL module is null! (os error: {})",
+        logger::fatal!(
+            "Could not load OpenGL module! (os error: {})",
             io::Error::last_os_error()
         );
-        return;
     }
 
-    *OPEN_GL_MODULE.lock().unwrap() = ModuleHandle(module);
+    match OPEN_GL_MODULE.lock() {
+        Ok(mut module_handle_mutex) => module_handle_mutex.0 = module,
+        Err(_) => logger::fatal!("Could not lock OpenGL module handle mutex!"),
+    }
 
     open_gl::initialize_open_gl_addresses(get_open_gl_address)
 }
 
 fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
-    let null_terminated_function_name = CString::new(function_name).unwrap();
+    let null_terminated_function_name = CString::new(function_name)
+        .unwrap_or_else(|_| logger::fatal!("Could not create CString! ({})", function_name));
 
     // Get address (via wglGetProcAddress)
     let mut address = unsafe { wglGetProcAddress(null_terminated_function_name.as_ptr()) };
@@ -274,17 +308,17 @@ fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
     {
         // Get address (via GetProcAddress)
         address = unsafe {
-            GetProcAddress(
-                OPEN_GL_MODULE.lock().unwrap().0,
-                null_terminated_function_name.as_ptr(),
-            )
+            let module_handle = OPEN_GL_MODULE
+                .lock()
+                .unwrap_or_else(|_| logger::fatal!("Could not lock OpenGL module handle mutex!"));
+
+            GetProcAddress(module_handle.0, null_terminated_function_name.as_ptr())
         };
     }
 
     if address.is_null() {
-        // TODO: Error handling
-        logger::error!(
-            "OpenGL address ({}) is null! (os error: {})",
+        logger::fatal!(
+            "Could not get OpenGL address ({})! (os error: {})",
             function_name,
             io::Error::last_os_error()
         );
@@ -303,10 +337,18 @@ unsafe extern "system" fn window_proc(
         WM_SIZE => {
             logger::info!("window_proc: WM_SIZE");
             let mut rect = RECT::default();
-            GetClientRect(window, &mut rect);
+
+            if GetClientRect(window, &mut rect) == 0 {
+                logger::fatal!(
+                    "Could not get client rect! (os error: {})",
+                    io::Error::last_os_error()
+                );
+            }
+
             let width = rect.right - rect.left;
             let height = rect.bottom - rect.top;
             let aspect_ratio = width as f32 / height as f32;
+
             logger::info!(
                 "WM_SIZE: width: {} / height: {} / aspect_ratio: {}",
                 width,
@@ -314,7 +356,10 @@ unsafe extern "system" fn window_proc(
                 aspect_ratio
             );
 
-            *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
+            match ASPECT_RATIO.lock() {
+                Ok(mut aspect_ratio_mutex) => *aspect_ratio_mutex = aspect_ratio,
+                Err(_) => logger::fatal!("Could not lock aspect ratio mutex!"),
+            }
 
             if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
                 // Set viewport
