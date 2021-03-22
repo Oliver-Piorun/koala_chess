@@ -149,10 +149,11 @@ pub fn r#loop(window: HWND, game: Game) {
         unsafe {
             // Draw game
             game.draw(
-                *ASPECT_RATIO
-                    .lock()
-                    .expect("Could not lock aspect ratio mutex!"),
-            );
+                *ASPECT_RATIO.lock().unwrap_or_else(|e| {
+                    logger::fatal!("Could not lock aspect ratio mutex! ({})", e)
+                }),
+            )
+            .unwrap();
 
             SwapBuffers(device_context);
         }
@@ -284,10 +285,10 @@ fn initialize_open_gl_addresses() {
         );
     }
 
-    match OPEN_GL_MODULE.lock() {
-        Ok(mut module_handle_mutex) => module_handle_mutex.0 = module,
-        Err(_) => logger::fatal!("Could not lock OpenGL module handle mutex!"),
-    }
+    *OPEN_GL_MODULE
+        .lock()
+        .unwrap_or_else(|e| logger::fatal!("Could not lock OpenGL module handle mutex! ({})", e)) =
+        ModuleHandle(module);
 
     open_gl::initialize_open_gl_addresses(get_open_gl_address)
 }
@@ -308,9 +309,9 @@ fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
     {
         // Get address (via GetProcAddress)
         address = unsafe {
-            let module_handle = OPEN_GL_MODULE
-                .lock()
-                .unwrap_or_else(|_| logger::fatal!("Could not lock OpenGL module handle mutex!"));
+            let module_handle = OPEN_GL_MODULE.lock().unwrap_or_else(|e| {
+                logger::fatal!("Could not lock OpenGL module handle mutex! ({})", e)
+            });
 
             GetProcAddress(module_handle.0, null_terminated_function_name.as_ptr())
         };
@@ -318,7 +319,7 @@ fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
 
     if address.is_null() {
         logger::fatal!(
-            "Could not get OpenGL address ({})! (os error: {})",
+            "Could not get OpenGL address! ({}) (os error: {})",
             function_name,
             io::Error::last_os_error()
         );
@@ -356,10 +357,10 @@ unsafe extern "system" fn window_proc(
                 aspect_ratio
             );
 
-            match ASPECT_RATIO.lock() {
-                Ok(mut aspect_ratio_mutex) => *aspect_ratio_mutex = aspect_ratio,
-                Err(_) => logger::fatal!("Could not lock aspect ratio mutex!"),
-            }
+            *ASPECT_RATIO
+                .lock()
+                .unwrap_or_else(|e| logger::fatal!("Could not lock aspect ratio mutex! ({})", e)) =
+                aspect_ratio;
 
             if INITIALIZED_OPEN_GL.load(Ordering::SeqCst) {
                 // Set viewport

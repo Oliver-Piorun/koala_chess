@@ -1,8 +1,9 @@
 use crate::bitmap;
 use crate::shader::Shader;
 use crate::traits::Draw;
-use std::lazy::SyncLazy;
+use logger::*;
 use std::sync::Mutex;
+use std::{error::Error, lazy::SyncLazy};
 
 static SHADER: SyncLazy<Mutex<Option<Shader>>> = SyncLazy::new(|| Mutex::new(None));
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
@@ -12,7 +13,10 @@ pub struct Board;
 
 impl Board {
     pub fn initialize(shader: Shader) {
-        *SHADER.lock().unwrap() = Some(shader);
+        *SHADER
+            .lock()
+            .unwrap_or_else(|e| logger::fatal!("Could not lock shader mutex! ({})", e)) =
+            Some(shader);
 
         // Load bitmap
         let bitmap = bitmap::load_bitmap("textures/board.bmp");
@@ -90,7 +94,7 @@ impl Board {
 }
 
 impl Draw for Board {
-    fn draw(&self, aspect_ratio: f32) {
+    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -133,13 +137,19 @@ impl Draw for Board {
         }
 
         // Use specific shader
-        let shader = SHADER.lock().unwrap().unwrap();
+        let shader_mutex = SHADER
+            .lock()
+            .unwrap_or_else(|e| logger::fatal!("Could not lock shader mutex! ({})", e));
+        let shader =
+            shader_mutex.unwrap_or_else(|| logger::fatal!("Shader has not been initialized!"));
         shader.r#use();
-        shader.set_float("aspect_ratio\0", aspect_ratio);
+        shader.set_float("aspect_ratio\0", aspect_ratio)?;
 
         // Draw elements
         unsafe {
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
         }
+
+        Ok(())
     }
 }

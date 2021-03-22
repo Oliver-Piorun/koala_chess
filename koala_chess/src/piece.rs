@@ -1,8 +1,8 @@
 use crate::bitmap;
 use crate::shader::Shader;
 use crate::traits::Draw;
-use std::lazy::SyncLazy;
 use std::sync::Mutex;
+use std::{error::Error, lazy::SyncLazy};
 
 pub enum PieceColor {
     White,
@@ -137,7 +137,7 @@ impl Piece {
 }
 
 impl Draw for Piece {
-    fn draw(&self, aspect_ratio: f32) {
+    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -182,15 +182,17 @@ impl Draw for Piece {
         // Use specific shader
         let atlas_shader = ATLAS_SHADER.lock().unwrap().unwrap();
         atlas_shader.r#use();
-        atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat);
-        atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat);
-        atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat);
-        atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat);
-        atlas_shader.set_float("aspect_ratio\0", aspect_ratio);
+        atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat)?;
+        atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat)?;
+        atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat)?;
+        atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat)?;
+        atlas_shader.set_float("aspect_ratio\0", aspect_ratio)?;
 
         // Draw elements
         unsafe {
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
         }
+
+        Ok(())
     }
 }

@@ -1,5 +1,5 @@
 use logger::*;
-use std::fs::read_to_string;
+use std::{error::Error, fs::read_to_string};
 
 #[derive(Copy, Clone)]
 pub struct Shader {
@@ -7,11 +7,14 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(vertex_shader_path: &str, fragment_shader_path: &str) -> Shader {
-        let mut vertex_shader_code = read_to_string(vertex_shader_path).unwrap();
+    pub fn new(
+        vertex_shader_path: &str,
+        fragment_shader_path: &str,
+    ) -> Result<Shader, Box<dyn Error>> {
+        let mut vertex_shader_code = read_to_string(vertex_shader_path)?;
         vertex_shader_code.push('\0');
 
-        let mut fragment_shader_code = read_to_string(fragment_shader_path).unwrap();
+        let mut fragment_shader_code = read_to_string(fragment_shader_path)?;
         fragment_shader_code.push('\0');
 
         unsafe {
@@ -27,7 +30,7 @@ impl Shader {
 
             gl::CompileShader(vertex_shader);
 
-            check_for_shader_errors(vertex_shader, vertex_shader_path);
+            check_for_shader_errors(vertex_shader, vertex_shader_path)?;
 
             // Fragment shader
             let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
@@ -41,7 +44,7 @@ impl Shader {
 
             gl::CompileShader(fragment_shader);
 
-            check_for_shader_errors(fragment_shader, fragment_shader_path);
+            check_for_shader_errors(fragment_shader, fragment_shader_path)?;
 
             // Program
             let program = gl::CreateProgram();
@@ -51,13 +54,13 @@ impl Shader {
 
             gl::LinkProgram(program);
 
-            check_for_program_errors(program);
+            check_for_program_errors(program)?;
 
             // Delete shaders. They are already linked into the program
             gl::DeleteShader(vertex_shader);
             gl::DeleteShader(fragment_shader);
 
-            Shader { program }
+            Ok(Shader { program })
         }
     }
 
@@ -67,37 +70,39 @@ impl Shader {
         }
     }
 
-    pub fn set_float(&self, name: &str, value: gl::types::GLfloat) {
+    pub fn set_float(&self, name: &str, value: gl::types::GLfloat) -> Result<(), Box<dyn Error>> {
         let uniform_location = unsafe {
             gl::GetUniformLocation(self.program, name.as_ptr() as *const gl::types::GLchar)
         };
 
         if uniform_location == -1 {
-            // TODO: Error handling
-            logger::error!(
+            return Err(format!(
                 "Could not get uniform location! (name: {}, value: {})",
-                name,
-                value
-            );
-            return;
+                name, value
+            ))?;
         }
 
         unsafe {
             gl::Uniform1f(uniform_location, value);
         }
+
+        Ok(())
     }
 }
 
-fn check_for_shader_errors(shader: gl::types::GLuint, shader_path: &str) {
+fn check_for_shader_errors(
+    shader: gl::types::GLuint,
+    shader_path: &str,
+) -> Result<(), Box<dyn Error>> {
     let mut success: gl::types::GLint = 0;
 
     unsafe {
         gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
     }
 
-    logger::info!("Shader compile status: {} ({})", success, shader_path);
-
-    if success == 0 {
+    if success == gl::TRUE as gl::types::GLint {
+        logger::info!("Shader compile status: success ({})", shader_path);
+    } else {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
 
         unsafe {
@@ -110,22 +115,31 @@ fn check_for_shader_errors(shader: gl::types::GLuint, shader_path: &str) {
         };
 
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
-        let log_str = log_cstr.to_str().unwrap();
 
-        logger::error!("Shader compile error: {} ({})", log_str, shader_path);
+        match log_cstr.to_str() {
+            Ok(log_str) => {
+                return Err(format!(
+                    "Shader compile error: {}! ({})",
+                    log_str, shader_path
+                ))?
+            }
+            Err(e) => return Err(format!("Could not create a CStr from a pointer! ({})", e))?,
+        }
     }
+
+    Ok(())
 }
 
-fn check_for_program_errors(program: gl::types::GLuint) {
+fn check_for_program_errors(program: gl::types::GLuint) -> Result<(), Box<dyn Error>> {
     let mut success: gl::types::GLint = 0;
 
     unsafe {
         gl::GetProgramiv(program, gl::LINK_STATUS, &mut success);
     }
 
-    logger::info!("Shader program link status: {}", success);
-
-    if success == 0 {
+    if success == gl::TRUE as gl::types::GLint {
+        logger::info!("Shader program link status: success");
+    } else {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
 
         unsafe {
@@ -138,8 +152,12 @@ fn check_for_program_errors(program: gl::types::GLuint) {
         };
 
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
-        let log_str = log_cstr.to_str().unwrap();
 
-        logger::error!("Shader program link error: {}", log_str);
+        match log_cstr.to_str() {
+            Ok(log_str) => return Err(format!("Shader program link error: {}!", log_str))?,
+            Err(e) => return Err(format!("Could not create a CStr from a pointer! ({})", e))?,
+        }
     }
+
+    Ok(())
 }
