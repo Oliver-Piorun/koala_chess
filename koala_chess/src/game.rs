@@ -141,8 +141,10 @@ impl Draw for Game {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
+        // Draw board
         self.board.draw(aspect_ratio)?;
 
+        // Draw pieces
         for piece in self.pieces.iter() {
             piece.draw(aspect_ratio)?;
         }
