@@ -1,6 +1,8 @@
 use crate::piece::{Piece, PieceColor, PieceKind};
 use crate::traits::Draw;
 use crate::{board::Board, shader};
+use logger::*;
+use std::error::Error;
 
 pub struct Game {
     pub board: Board,
@@ -83,8 +85,10 @@ impl Game {
 
     pub fn initialize() {
         // Create shaders
-        let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag");
-        let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag");
+        let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag")
+            .unwrap_or_else(|e| logger::fatal!("{}", e));
+        let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag")
+            .unwrap_or_else(|e| logger::fatal!("{}", e));
 
         let mut vertex_array_object: gl::types::GLuint = 0;
         let mut element_buffer_object: gl::types::GLuint = 0;
@@ -127,7 +131,7 @@ impl Game {
 }
 
 impl Draw for Game {
-    fn draw(&self, aspect_ratio: f32) {
+    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Set the clear color
             gl::ClearColor(0.17, 0.32, 0.59, 0.0);
@@ -136,10 +140,14 @@ impl Draw for Game {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
-        self.board.draw(aspect_ratio);
+        // Draw board
+        self.board.draw(aspect_ratio)?;
 
+        // Draw pieces
         for piece in self.pieces.iter() {
-            piece.draw(aspect_ratio);
+            piece.draw(aspect_ratio)?;
         }
+
+        Ok(())
     }
 }

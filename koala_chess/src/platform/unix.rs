@@ -2,6 +2,7 @@ use crate::game::Game;
 use crate::renderer::open_gl;
 use crate::traits::Draw;
 use logger::*;
+use std::error::Error;
 use std::ffi::{c_void, CStr, CString};
 use std::lazy::SyncLazy;
 use std::os::raw::{c_int, c_uint};
@@ -10,7 +11,7 @@ use x11::xlib;
 
 static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
 
-pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
+pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
     initialize_glx_addresses();
     open_gl::initialize_open_gl_addresses(get_address);
 
@@ -21,9 +22,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
     };
 
     if display.is_null() {
-        // TODO: Error handling
-        logger::error!("Could not open display!");
-        return None;
+        logger::fatal!("Could not open display!");
     }
 
     let mut major_glx: glx::types::GLint = 0;
@@ -80,11 +79,9 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
         );
 
         if framebuffer_count == 0 {
-            // TODO: Error handling
-            logger::error!(
-                "Could not get a framebuffer config which matches the specified attributes!"
+            logger::fatal!(
+                "Could not get framebuffer configs which satisfy the specified attributes!"
             );
-            return None;
         }
 
         // Find the best framebuffer config
@@ -130,15 +127,11 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
             xlib::XFree(visual_info as *mut c_void);
         }
 
-        if best_framebuffer_config_index.is_none() {
-            // Error handling
-            logger::error!("Could not find the best framebuffer config!");
-            return None;
-        }
+        let best_framebuffer_config_index = best_framebuffer_config_index
+            .unwrap_or_else(|| logger::fatal!("Could not find the best framebuffer config!"));
 
         // Get the best framebuffer config
-        let best_framebuffer_config =
-            *framebuffer_configs.offset(best_framebuffer_config_index.unwrap());
+        let best_framebuffer_config = *framebuffer_configs.offset(best_framebuffer_config_index);
 
         // Free framebuffer configs
         xlib::XFree(framebuffer_configs as *mut c_void);
@@ -151,18 +144,19 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
         );
 
         if visual_info.is_null() {
-            // TODO: Error handling
-            logger::error!("Could not get a visual info from the framebuffer config!");
-            return None;
+            logger::fatal!("Could not get a visual info from the framebuffer config!");
         }
 
         let context;
 
-        if !is_extension_supported(
+        let extension_supported = is_extension_supported(
             "GLX_ARB_create_context",
             display as *mut glx::types::Display,
             screen_id,
-        ) {
+        )
+        .unwrap_or(false);
+
+        if !extension_supported {
             // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXCreateNewContext.xml
             context = glx::CreateNewContext(
                 display as *mut glx::types::Display, // dpy
@@ -190,9 +184,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
         }
 
         if context.is_null() {
-            // TODO: Error handling
-            logger::error!("Could not create a context!");
-            return None;
+            logger::fatal!("Could not create a context!");
         }
 
         // Flush the output buffer and wait until all request have been received and processed by the X server
@@ -209,9 +201,7 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
             context,                             // ctx
         ) == false as glx::types::Bool
         {
-            // TODO: Error handling
-            logger::error!("Created context is not a direct context!");
-            return None;
+            logger::fatal!("Created context is not a direct context!");
         }
 
         let mut attributes: xlib::XSetWindowAttributes =
@@ -253,19 +243,26 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
         );
 
         let vendor_cstr = CStr::from_ptr(gl::GetString(gl::VENDOR) as *mut i8);
-        let vendor = vendor_cstr.to_str().unwrap();
+        let vendor = vendor_cstr
+            .to_str()
+            .unwrap_or_else(|e| logger::fatal!("Could not create &str! ({})", e));
         logger::info!("GL vendor: {}", vendor);
 
         let renderer_cstr = CStr::from_ptr(gl::GetString(gl::RENDERER) as *mut i8);
-        let renderer = renderer_cstr.to_str().unwrap();
+        let renderer = renderer_cstr
+            .to_str()
+            .unwrap_or_else(|e| logger::fatal!("Could not create &str! ({})", e));
         logger::info!("GL renderer: {}", renderer);
 
         let version_cstr = CStr::from_ptr(gl::GetString(gl::VERSION) as *mut i8);
-        let version = version_cstr.to_str().unwrap();
+        let version = version_cstr
+            .to_str()
+            .unwrap_or_else(|e| logger::fatal!("Could not create &str! ({})", e));
         logger::info!("GL version: {}", version);
 
         // Create window name
-        let window_name = CString::new("Koala chess").unwrap();
+        let window_name = CString::new("Koala chess")
+            .unwrap_or_else(|_| logger::fatal!("Could not create CString!"));
 
         // Set window name
         xlib::XStoreName(display, window, window_name.as_ptr());
@@ -276,14 +273,16 @@ pub fn create_window() -> Option<(*mut xlib::Display, glx::types::Window)> {
             window,  // w
         );
 
-        Some((display, window))
+        (display, window)
     }
 }
 
 pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
     unsafe {
-        let wm_protocols_str = CString::new("WM_PROTOCOLS").unwrap();
-        let wm_delete_window_str = CString::new("WM_DELETE_WINDOW").unwrap();
+        let wm_protocols_str = CString::new("WM_PROTOCOLS")
+            .unwrap_or_else(|_| logger::fatal!("Could not create CString!"));
+        let wm_delete_window_str = CString::new("WM_DELETE_WINDOW")
+            .unwrap_or_else(|_| logger::fatal!("Could not create CString!"));
 
         let wm_protocols = xlib::XInternAtom(
             display,                   // display
@@ -308,6 +307,7 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
 
         let mut event: xlib::XEvent = std::mem::MaybeUninit::uninit().assume_init();
 
+        // Window loop
         loop {
             xlib::XNextEvent(display, &mut event);
 
@@ -325,7 +325,9 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
                     aspect_ratio
                 );
 
-                *ASPECT_RATIO.lock().unwrap() = aspect_ratio;
+                *ASPECT_RATIO.lock().unwrap_or_else(|e| {
+                    logger::fatal!("Could not lock aspect ratio mutex! ({})", e)
+                }) = aspect_ratio;
 
                 // Set viewport
                 gl::Viewport(0, 0, width, height);
@@ -344,7 +346,13 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
             }
 
             // Draw game
-            game.draw(*ASPECT_RATIO.lock().unwrap());
+            let aspect_ratio_mutex = *ASPECT_RATIO
+                .lock()
+                .unwrap_or_else(|e| logger::fatal!("Could not lock aspect ratio mutex! ({})", e));
+
+            if let Err(e) = game.draw(aspect_ratio_mutex) {
+                logger::error!("{}", e);
+            }
 
             glx::SwapBuffers(display as *mut glx::types::Display, window);
         }
@@ -355,14 +363,16 @@ fn initialize_glx_addresses() {
     // Get and assign addresses
     let _ = glx::GetProcAddress::load_with(|function_name| unsafe {
         // Create null-terminated function name
-        let null_terminated_function_name = CString::new(function_name).unwrap();
+        let null_terminated_function_name = CString::new(function_name)
+            .unwrap_or_else(|_| logger::fatal!("Could not create CString! ({})", function_name));
 
         // TODO: Don't use the x11 library to get the address of GetProcAddress but rather something like this:
         // https://stackoverflow.com/questions/38674176/manually-calling-opengl-functions
         x11::glx::glXGetProcAddress(
             null_terminated_function_name.as_ptr() as *const glx::types::GLubyte
         )
-        .unwrap() as *const std::ffi::c_void
+        .unwrap_or_else(|| logger::fatal!("Could not get address! ({})", function_name))
+            as *const std::ffi::c_void
     });
     let _ = glx::QueryVersion::load_with(|function_name| get_address(function_name));
     let _ = glx::ChooseFBConfig::load_with(|function_name| get_address(function_name));
@@ -378,8 +388,10 @@ fn initialize_glx_addresses() {
 
 fn get_address(function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
-    let null_terminated_function_name = CString::new(function_name).unwrap();
+    let null_terminated_function_name = CString::new(function_name)
+        .unwrap_or_else(|_| logger::fatal!("Could not create CString! ({})", function_name));
 
+    // Get address
     let address = unsafe {
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetProcAddress.xml
         glx::GetProcAddress(
@@ -388,8 +400,7 @@ fn get_address(function_name: &str) -> *const std::ffi::c_void {
     };
 
     if address.is_null() {
-        // TODO: Error handling
-        logger::error!("Address ({}) is null!", function_name);
+        logger::fatal!("Could not get address ({})!", function_name);
     }
 
     address as *const std::ffi::c_void
@@ -399,7 +410,7 @@ unsafe fn is_extension_supported(
     extension: &str,
     display: *mut glx::types::Display,
     screen: glx::types::GLint,
-) -> bool {
+) -> Result<bool, Box<dyn Error>> {
     // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXQueryExtensionsString.xml
     let query_extension_string_raw = glx::QueryExtensionsString(
         display as *mut glx::types::Display, // dpy
@@ -408,7 +419,7 @@ unsafe fn is_extension_supported(
 
     let query_extension_string_cstring =
         std::ffi::CString::from_raw(query_extension_string_raw as *mut i8);
-    let query_extension_string_str = query_extension_string_cstring.to_str().unwrap();
+    let query_extension_string_str = query_extension_string_cstring.to_str()?;
 
-    query_extension_string_str.contains(extension)
+    Ok(query_extension_string_str.contains(extension))
 }

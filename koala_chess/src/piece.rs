@@ -1,8 +1,9 @@
 use crate::bitmap;
 use crate::shader::Shader;
 use crate::traits::Draw;
-use std::lazy::SyncLazy;
+use logger::*;
 use std::sync::Mutex;
+use std::{error::Error, lazy::SyncLazy};
 
 pub enum PieceColor {
     White,
@@ -59,10 +60,14 @@ impl Piece {
     }
 
     pub fn initialize(atlas_shader: Shader) {
-        *ATLAS_SHADER.lock().unwrap() = Some(atlas_shader);
+        *ATLAS_SHADER
+            .lock()
+            .unwrap_or_else(|e| logger::fatal!("Could not lock atlas shader mutex! {}", e)) =
+            Some(atlas_shader);
 
         // Load bitmap
-        let bitmap = bitmap::load_bitmap("textures/pieces.bmp");
+        let bitmap = bitmap::load_bitmap("textures/pieces.bmp")
+            .unwrap_or_else(|e| logger::fatal!("Could not load pieces bitmap! ({})", e));
 
         #[rustfmt::skip]
         let vertices: [f32; 32] = [
@@ -137,7 +142,7 @@ impl Piece {
 }
 
 impl Draw for Piece {
-    fn draw(&self, aspect_ratio: f32) {
+    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -180,17 +185,23 @@ impl Draw for Piece {
         }
 
         // Use specific shader
-        let atlas_shader = ATLAS_SHADER.lock().unwrap().unwrap();
+        let atlas_shader_mutex = ATLAS_SHADER
+            .lock()
+            .unwrap_or_else(|e| logger::fatal!("Could not lock atlas shader mutex! {}", e));
+        let atlas_shader = atlas_shader_mutex
+            .unwrap_or_else(|| logger::fatal!("Atlas shader has not been initialized yet!"));
         atlas_shader.r#use();
-        atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat);
-        atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat);
-        atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat);
-        atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat);
-        atlas_shader.set_float("aspect_ratio\0", aspect_ratio);
+        atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat)?;
+        atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat)?;
+        atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat)?;
+        atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat)?;
+        atlas_shader.set_float("aspect_ratio\0", aspect_ratio)?;
 
         // Draw elements
         unsafe {
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
         }
+
+        Ok(())
     }
 }
