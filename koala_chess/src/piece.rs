@@ -62,12 +62,12 @@ impl Piece {
     pub fn initialize(atlas_shader: Shader) {
         *ATLAS_SHADER
             .lock()
-            .unwrap_or_else(|e| logger::fatal!("Could not lock atlas shader mutex! {}", e)) =
+            .unwrap_or_else(|e| fatal!("Could not lock atlas shader mutex! {}", e)) =
             Some(atlas_shader);
 
         // Load bitmap
         let bitmap = bitmap::load_bitmap("textures/pieces.bmp")
-            .unwrap_or_else(|e| logger::fatal!("Could not load pieces bitmap! ({})", e));
+            .unwrap_or_else(|e| fatal!("Could not load pieces bitmap! ({})", e));
 
         #[rustfmt::skip]
         let vertices: [f32; 32] = [
@@ -187,9 +187,9 @@ impl Draw for Piece {
         // Use specific shader
         let atlas_shader_mutex = ATLAS_SHADER
             .lock()
-            .unwrap_or_else(|e| logger::fatal!("Could not lock atlas shader mutex! {}", e));
+            .unwrap_or_else(|e| fatal!("Could not lock atlas shader mutex! {}", e));
         let atlas_shader = atlas_shader_mutex
-            .unwrap_or_else(|| logger::fatal!("Atlas shader has not been initialized yet!"));
+            .unwrap_or_else(|| fatal!("Atlas shader has not been initialized yet!"));
         atlas_shader.r#use();
         atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat)?;
         atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat)?;

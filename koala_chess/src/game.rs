@@ -86,9 +86,9 @@ impl Game {
     pub fn initialize() {
         // Create shaders
         let shader = shader::Shader::new("shaders/vertex.vert", "shaders/fragment.frag")
-            .unwrap_or_else(|e| logger::fatal!("{}", e));
+            .unwrap_or_else(|e| fatal!("{}", e));
         let atlas_shader = shader::Shader::new("shaders/atlas.vert", "shaders/atlas.frag")
-            .unwrap_or_else(|e| logger::fatal!("{}", e));
+            .unwrap_or_else(|e| fatal!("{}", e));
 
         let mut vertex_array_object: gl::types::GLuint = 0;
         let mut element_buffer_object: gl::types::GLuint = 0;

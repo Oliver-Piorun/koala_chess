@@ -102,7 +102,7 @@ fn check_for_shader_errors(
     }
 
     if success == gl::TRUE as gl::types::GLint {
-        logger::info!("Shader compile status: success ({})", shader_path);
+        info!("Shader compile status: success ({})", shader_path);
     } else {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
 
@@ -136,7 +136,7 @@ fn check_for_program_errors(program: gl::types::GLuint) -> Result<(), Box<dyn Er
     }
 
     if success == gl::TRUE as gl::types::GLint {
-        logger::info!("Shader program link status: success");
+        info!("Shader program link status: success");
     } else {
         let mut log: [gl::types::GLchar; 1024] = [0; 1024];
 

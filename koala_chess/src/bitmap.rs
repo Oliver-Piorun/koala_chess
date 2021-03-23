@@ -111,11 +111,9 @@ pub fn load_bitmap(path: &str) -> io::Result<Bitmap> {
     file.seek(SeekFrom::Start(data_offset.into()))?;
     file.read_exact(&mut data)?;
 
-    logger::info!(
+    info!(
         "Loaded bitmap: {} / width: {} / height: {}",
-        path,
-        width,
-        height
+        path, width, height
     );
 
     Ok(Bitmap::new(file_header, information_header, data))
