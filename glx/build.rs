@@ -15,5 +15,5 @@ fn main() {
         ["GLX_ARB_create_context"],
     )
     .write_bindings(GlobalGenerator, &mut file)
-    .unwrap_or_else(|e| panic!("Could not create bindings ({})", e));
+    .unwrap_or_else(|e| panic!("Could not create bindings! ({})", e));
 }

@@ -15,5 +15,5 @@ fn main() {
         ["GL_EXT_texture_format_BGRA8888"],
     )
     .write_bindings(GlobalGenerator, &mut file)
-    .unwrap_or_else(|e| panic!("Could not create bindings ({})", e));
+    .unwrap_or_else(|e| panic!("Could not create bindings! ({})", e));
 }
