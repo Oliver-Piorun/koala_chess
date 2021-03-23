@@ -1,9 +1,8 @@
-use std::error::Error;
-
 use crate::piece::{Piece, PieceColor, PieceKind};
 use crate::traits::Draw;
 use crate::{board::Board, shader};
 use logger::*;
+use std::error::Error;
 
 pub struct Game {
     pub board: Board,
