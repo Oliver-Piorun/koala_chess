@@ -1,4 +1,5 @@
 #version 300 es
+#define M_PI 3.1415926535897932384626433832795
 precision mediump float;
 
 layout (location = 0) in vec3 in_position;
@@ -7,6 +8,7 @@ layout (location = 2) in vec2 in_texture_coordinate;
 
 uniform float board_x;
 uniform float board_y;
+uniform float rotation;
 uniform float aspect_ratio;
 
 out vec3 color;
@@ -31,19 +33,34 @@ void main()
 {
     float corrected_board_x = board_x * 2.0 - 7.0;
     float corrected_board_y = board_y * 2.0 - 7.0;
-    float corrected_x = (in_position.x + corrected_board_x) * scale;
-    float corrected_y = (in_position.y + corrected_board_y) * scale;
+    
+    // Scaling
+    float scaled_x = (in_position.x + corrected_board_x) * scale;
+    float scaled_y = (in_position.y + corrected_board_y) * scale;
 
+    // Rotation
+    float rotated_x = scaled_x;
+    float rotated_y = scaled_y;
+
+    if (rotation > 0.0)
+    {
+        float radian = rotation * (M_PI / 180.0);
+
+        rotated_x = cos(radian) * scaled_x - sin(radian) * scaled_y;
+        rotated_y = sin(radian) * scaled_x + cos(radian) * scaled_y;
+    }
+
+    // Aspect ratio
     if (aspect_ratio >= 1.0)
     {
-        corrected_x /= aspect_ratio;
+        rotated_x /= aspect_ratio;
     }
     else
     {
-        corrected_y *= aspect_ratio;
+        rotated_y *= aspect_ratio;
     }
-   
-    gl_Position = vec4(vec3(corrected_x, corrected_y, in_position.z), 1.0);
+
+    gl_Position = vec4(vec3(rotated_x, rotated_y, in_position.z), 1.0);
     color = in_color;
     texture_coordinate = in_texture_coordinate;
 }
