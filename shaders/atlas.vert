@@ -18,6 +18,7 @@ const float texture_size = 1024.0;
 const float border_size = 6.0;
 const float margin = 0.2;
 const float tile_count = 8.0;
+const float tile_offset = -7.0;
 
 // (1024.0 - 2.0 * 6.0) * (1.0 - 0.2) / 8.0
 // (1024.0 - 12.0) * 0.8 / 8.0
@@ -31,9 +32,14 @@ const float scale = tile_size / texture_size;
 
 void main()
 {
-    float corrected_board_x = board_x * 2.0 - 7.0;
-    float corrected_board_y = board_y * 2.0 - 7.0;
-    
+    // Map each board coordinate from [0,7] to [-7,7]
+    // (0,0) => (-7,-7)
+    // (1,0) => (-5,-7)
+    // ...
+    // (7,0) => ( 7, 0)
+    float corrected_board_x = board_x * 2.0 + tile_offset;
+    float corrected_board_y = board_y * 2.0 + tile_offset;
+
     // Scaling
     float scaled_x = (in_position.x + corrected_board_x) * scale;
     float scaled_y = (in_position.y + corrected_board_y) * scale;
