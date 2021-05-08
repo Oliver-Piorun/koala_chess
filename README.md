@@ -1,9 +1,19 @@
-# Koala chess
-[![pipeline status](https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml)
-[![dependency status](https://deps.rs/repo/github/oliver-piorun/koala_chess/status.svg)](https://deps.rs/repo/github/oliver-piorun/koala_chess)
-![license](https://img.shields.io/badge/license-MIT-blue.svg)
+<h1 align="center">Koala Chess</h1>
+<p align="center">
+  <i>A handcrafted 2D chess game written in <a href="https://www.rust-lang.org">Rust</a>.</i>
+</p>
 
-A handcrafted 2D chess game written in [Rust](https://www.rust-lang.org).
+<p align="center">
+  <a href="https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml">
+    <img src="https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml/badge.svg" alt="pipeline status" />
+  </a>
+  <a href="https://deps.rs/repo/github/oliver-piorun/koala_chess">
+    <img src="https://deps.rs/repo/github/oliver-piorun/koala_chess/status.svg" alt="dependency status" />
+  </a>
+  <a href="https://github.com/Oliver-Piorun/koala_chess/blob/master/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license" />
+  </a>
+</p>
 
 #
 
