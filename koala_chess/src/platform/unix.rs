@@ -2,11 +2,14 @@ use crate::game::Game;
 use crate::renderer::open_gl;
 use crate::traits::Draw;
 use logger::*;
-use std::error::Error;
-use std::ffi::{c_void, CStr, CString};
 use std::lazy::SyncLazy;
 use std::os::raw::{c_int, c_uint};
 use std::sync::Mutex;
+use std::{error::Error, mem::MaybeUninit};
+use std::{
+    ffi::{c_void, CStr, CString},
+    ptr::addr_of_mut,
+};
 use x11::xlib;
 
 static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
@@ -202,18 +205,24 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
             fatal!("Created context is not a direct context!");
         }
 
-        let mut attributes: xlib::XSetWindowAttributes =
-            std::mem::MaybeUninit::uninit().assume_init();
-        attributes.border_pixel = xlib::XBlackPixel(display, screen_id);
-        attributes.background_pixel = xlib::XWhitePixel(display, screen_id);
-        attributes.override_redirect = xlib::True;
-        attributes.colormap = xlib::XCreateColormap(
-            display,
-            root,
-            (*visual_info).visual as *mut xlib::Visual,
-            xlib::AllocNone,
-        );
-        attributes.event_mask = xlib::ExposureMask;
+        let mut attributes = {
+            let mut attributes_uninit: MaybeUninit<xlib::XSetWindowAttributes> =
+                MaybeUninit::uninit();
+            let ptr = attributes_uninit.as_mut_ptr();
+
+            addr_of_mut!((*ptr).border_pixel).write(xlib::XBlackPixel(display, screen_id));
+            addr_of_mut!((*ptr).background_pixel).write(xlib::XWhitePixel(display, screen_id));
+            addr_of_mut!((*ptr).override_redirect).write(xlib::True);
+            addr_of_mut!((*ptr).colormap).write(xlib::XCreateColormap(
+                display,
+                root,
+                (*visual_info).visual as *mut xlib::Visual,
+                xlib::AllocNone,
+            ));
+            addr_of_mut!((*ptr).event_mask).write(xlib::ExposureMask);
+
+            attributes_uninit.assume_init()
+        };
 
         // Create window
         // Reference: https://tronche.com/gui/x/xlib/window/XCreateWindow.html
@@ -303,15 +312,22 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
             protocols.len() as c_int, // count
         );
 
-        let mut event: xlib::XEvent = std::mem::MaybeUninit::uninit().assume_init();
+        let mut event = {
+            let event_uninit = MaybeUninit::uninit();
+
+            event_uninit.assume_init()
+        };
 
         // Window loop
         loop {
             xlib::XNextEvent(display, &mut event);
 
             if event.type_ == xlib::Expose {
-                let mut attributes: xlib::XWindowAttributes =
-                    std::mem::MaybeUninit::uninit().assume_init();
+                let mut attributes = {
+                    let attributes_uninit = MaybeUninit::uninit();
+
+                    attributes_uninit.assume_init()
+                };
                 xlib::XGetWindowAttributes(display, window, &mut attributes);
                 let width = attributes.width;
                 let height = attributes.height;
