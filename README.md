@@ -41,14 +41,14 @@ Feel free to build it from source until a playable version is being released! :b
 - Navigate to the cloned repository
 - Run `cargo run --release`
 
+## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
+
 ## :wrench: Technical goals
 - Use as few dependencies as possible
 - Keep an eye on performance
 
 ## :bulb: Personal goals
 - Learn more about Rust, rendering and game development
-
-## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
 
 ### Used development tools
 - [Visual Studio Code (website)](https://code.visualstudio.com)
