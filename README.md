@@ -4,6 +4,14 @@
 </p>
 
 <p align="center">
+  <a href="#desktop_computer-supported-platforms">Supported platforms</a>
+  ·
+  <a href="#zap-getting-started">Getting started</a>
+  ·
+  <a href="https://github.com/Oliver-Piorun/koala_chess/projects/1">Development plan</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml">
     <img src="https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml/badge.svg" alt="pipeline status" />
   </a>
