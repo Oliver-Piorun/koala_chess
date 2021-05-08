@@ -1,5 +1,5 @@
 # Koala chess
-[![build](https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml)
+[![Pipeline](https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Oliver-Piorun/koala_chess/actions/workflows/pipeline.yml)
 [![dependency status](https://deps.rs/repo/github/oliver-piorun/koala_chess/status.svg)](https://deps.rs/repo/github/oliver-piorun/koala_chess)
 
 A handcrafted 2D chess game written in [Rust](https://www.rust-lang.org).
