@@ -145,7 +145,7 @@ impl Draw for Game {
 
         // Draw pieces
         for piece in self.pieces.iter() {
-            // piece.draw(aspect_ratio)?;
+            piece.draw(aspect_ratio)?;
         }
 
         Ok(())

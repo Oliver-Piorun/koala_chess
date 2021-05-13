@@ -131,13 +131,13 @@ impl Draw for Board {
         shader.r#use();
 
         let mut translation = Vec3::default();
-        translation[0] = 200.0;
-        translation[1] = 200.0;
+        translation[0] = 90.0;
+        translation[1] = 80.0;
 
         let mut model = Mat4::identity();
         model = translate(model, translation);
-        model = rotate_z(model, 45.0);
-        model = scale(model, Vec3::new(400.0));
+        model = rotate_z(model, 0.0);
+        model = scale(model, Vec3::new(620.0));
         let projection = orthogonal_projection(0.0, 800.0, 800.0, 0.0, -1.0, 1.0);
 
         shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
