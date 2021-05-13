@@ -89,6 +89,26 @@ impl Shader {
 
         Ok(())
     }
+
+    pub fn set_mat4(
+        &self,
+        name: &str,
+        value: *const gl::types::GLfloat,
+    ) -> Result<(), Box<dyn Error>> {
+        let uniform_location = unsafe {
+            gl::GetUniformLocation(self.program, name.as_ptr() as *const gl::types::GLchar)
+        };
+
+        if uniform_location == -1 {
+            return Err(format!("Could not get uniform location! (name: {})", name).into());
+        }
+
+        unsafe {
+            gl::UniformMatrix4fv(uniform_location, 1, gl::FALSE, value);
+        }
+
+        Ok(())
+    }
 }
 
 fn check_for_shader_errors(

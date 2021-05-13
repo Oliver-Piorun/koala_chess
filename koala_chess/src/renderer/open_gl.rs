@@ -36,6 +36,7 @@ pub fn initialize_open_gl_addresses(get_open_gl_address: fn(&str) -> *const std:
     let _ = gl::LinkProgram::load_with(|function_name| get_open_gl_address(function_name));
     let _ = gl::ShaderSource::load_with(|function_name| get_open_gl_address(function_name));
     let _ = gl::Uniform1f::load_with(|function_name| get_open_gl_address(function_name));
+    let _ = gl::UniformMatrix4fv::load_with(|function_name| get_open_gl_address(function_name));
     let _ = gl::UseProgram::load_with(|function_name| get_open_gl_address(function_name));
     let _ = gl::VertexAttribPointer::load_with(|function_name| get_open_gl_address(function_name));
 }

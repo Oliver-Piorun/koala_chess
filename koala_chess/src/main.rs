@@ -4,11 +4,15 @@
 mod bitmap;
 mod board;
 mod game;
+mod mat4;
 mod piece;
 mod platform;
 mod renderer;
 mod shader;
 mod traits;
+mod transformations;
+mod vec3;
+mod vec4;
 
 use game::Game;
 

@@ -93,8 +93,8 @@ pub fn create_window() -> HWND {
             WS_OVERLAPPEDWINDOW | WS_VISIBLE, // dwStyle
             CW_USEDEFAULT,                    // X
             CW_USEDEFAULT,                    // Y
-            CW_USEDEFAULT,                    // nWidth
-            CW_USEDEFAULT,                    // nHeight
+            800,                              //CW_USEDEFAULT,                    // nWidth
+            800,                              //CW_USEDEFAULT,                    // nHeight
             std::ptr::null_mut(),             // hWndParent
             std::ptr::null_mut(),             // hMenu
             window_class.hInstance,           // hInstance
