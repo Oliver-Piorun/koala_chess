@@ -130,22 +130,34 @@ impl Draw for Board {
         let shader = shader_mutex.unwrap_or_else(|| fatal!("Shader has not been initialized yet!"));
         shader.r#use();
 
+        let mut right = 800.0;
+        let mut bottom = 800.0;
+
+        if aspect_ratio >= 1.0 {
+            right *= aspect_ratio;
+        } else {
+            bottom /= aspect_ratio;
+        }
+
+        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+
+        let board_size = 620.0;
+
+        // Calculate centering translation
         let mut translation = Vec3::default();
-        translation[0] = 90.0;
-        translation[1] = 80.0;
+        translation[0] = right / 2.0 - board_size / 2.0;
+        translation[1] = bottom / 2.0 - board_size / 2.0;
 
         let mut model = Mat4::identity();
         model = translate(model, translation);
         model = rotate_z(model, 0.0);
-        model = scale(model, Vec3::new(620.0));
-        let projection = orthogonal_projection(0.0, 800.0, 800.0, 0.0, -1.0, 1.0);
+        model = scale(model, Vec3::new(board_size));
 
         shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         shader.set_mat4(
             "projection\0",
             projection.as_ptr() as *const gl::types::GLfloat,
         )?;
-        // shader.set_float("aspect_ratio\0", aspect_ratio)?;
 
         // Draw elements
         unsafe {
