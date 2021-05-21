@@ -26,10 +26,10 @@ impl Add<Vec3> for Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Vec3) -> Self::Output {
-        let mut result = self.clone();
-        result[0] = result[0] + rhs[0];
-        result[1] = result[1] + rhs[1];
-        result[2] = result[2] + rhs[2];
+        let mut result = self;
+        result[0] += rhs[0];
+        result[1] += rhs[1];
+        result[2] += rhs[2];
 
         result
     }
@@ -39,10 +39,10 @@ impl Mul<gl::types::GLfloat> for Vec3 {
     type Output = Vec3;
 
     fn mul(self, rhs: gl::types::GLfloat) -> Self::Output {
-        let mut result = self.clone();
-        result[0] = result[0] * rhs;
-        result[1] = result[1] * rhs;
-        result[2] = result[2] * rhs;
+        let mut result = self;
+        result[0] *= rhs;
+        result[1] *= rhs;
+        result[2] *= rhs;
 
         result
     }
