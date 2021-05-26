@@ -28,11 +28,11 @@ impl Board {
 
         #[rustfmt::skip]
         let vertices: [f32; 16] = [
-             // positions, texture coordinates
-             1.0, 0.0,     1.0, 0.0, // top right
-             1.0, 1.0,     1.0, 1.0, // bottom right
-             0.0, 1.0,     0.0, 1.0, // bottom left
-             0.0, 0.0,     0.0, 0.0, // top left
+            // positions, texture coordinates
+            1.0, 0.0,     1.0, 0.0, // top right
+            1.0, 1.0,     1.0, 1.0, // bottom right
+            0.0, 1.0,     0.0, 1.0, // bottom left
+            0.0, 0.0,     0.0, 0.0, // top left
         ];
 
         unsafe {

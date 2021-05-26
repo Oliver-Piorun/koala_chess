@@ -2,9 +2,8 @@
 #define M_PI 3.1415926535897932384626433832795
 precision mediump float;
 
-layout (location = 0) in vec3 in_position;
-layout (location = 1) in vec3 in_color;
-layout (location = 2) in vec2 in_texture_coordinate;
+layout (location = 0) in vec2 in_position;
+layout (location = 1) in vec2 in_texture_coordinate;
 
 uniform float board_x;
 uniform float board_y;
@@ -66,7 +65,6 @@ void main()
         rotated_y *= aspect_ratio;
     }
 
-    gl_Position = vec4(vec3(rotated_x, rotated_y, in_position.z), 1.0);
-    color = in_color;
+    gl_Position = vec4(rotated_x, rotated_y, 0.0, 1.0);
     texture_coordinate = in_texture_coordinate;
 }

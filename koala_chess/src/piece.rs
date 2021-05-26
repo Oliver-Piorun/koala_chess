@@ -70,12 +70,12 @@ impl Piece {
             .unwrap_or_else(|e| fatal!("Could not load pieces bitmap! ({})", e));
 
         #[rustfmt::skip]
-        let vertices: [f32; 32] = [
-            // positions,    colors,        texture coordinates
-             1.0,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-             1.0, -1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-            -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-            -1.0,  1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+        let vertices: [f32; 16] = [
+            // positions, texture coordinates
+            1.0, 0.0,     1.0, 0.0, // top right
+            1.0, 1.0,     1.0, 1.0, // bottom right
+            0.0, 1.0,     0.0, 1.0, // bottom left
+            0.0, 0.0,     0.0, 0.0, // top left
         ];
 
         unsafe {
@@ -150,35 +150,17 @@ impl Draw for Piece {
             // Position attribute
             gl::VertexAttribPointer(
                 0,
-                3,
+                2,
                 gl::FLOAT,
                 gl::FALSE,
-                32,
+                16,
                 std::ptr::null::<std::ffi::c_void>(),
             );
             gl::EnableVertexAttribArray(0);
 
-            // Color attribute
-            gl::VertexAttribPointer(
-                1,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                12 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(1);
-
             // Texture coordinates attribute
-            gl::VertexAttribPointer(
-                2,
-                2,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                24 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(2);
+            gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, 16, 8 as *const std::ffi::c_void);
+            gl::EnableVertexAttribArray(1);
 
             // Bind texture
             gl::BindTexture(gl::TEXTURE_2D, TEXTURE);
