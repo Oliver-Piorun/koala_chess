@@ -1,6 +1,10 @@
 use crate::bitmap;
+use crate::mat4::Mat4;
 use crate::shader::Shader;
 use crate::traits::Draw;
+use crate::transformations::scale;
+use crate::transformations::translate;
+use crate::vec3::Vec3;
 use logger::*;
 use std::sync::Mutex;
 use std::{error::Error, lazy::SyncLazy};
@@ -72,10 +76,10 @@ impl Piece {
         #[rustfmt::skip]
         let vertices: [f32; 16] = [
             // positions, texture coordinates
+            0.0, 0.0,     0.0, 0.0, // top left
             1.0, 0.0,     1.0, 0.0, // top right
             1.0, 1.0,     1.0, 1.0, // bottom right
             0.0, 1.0,     0.0, 1.0, // bottom left
-            0.0, 0.0,     0.0, 0.0, // top left
         ];
 
         unsafe {
@@ -173,11 +177,40 @@ impl Draw for Piece {
         let atlas_shader = atlas_shader_mutex
             .unwrap_or_else(|| fatal!("Atlas shader has not been initialized yet!"));
         atlas_shader.r#use();
-        atlas_shader.set_float("board_x\0", self.board_x as gl::types::GLfloat)?;
-        atlas_shader.set_float("board_y\0", self.board_y as gl::types::GLfloat)?;
+
+        let mut right = 800.0;
+        let mut bottom = 800.0;
+
+        if aspect_ratio >= 1.0 {
+            right *= aspect_ratio;
+        } else {
+            bottom /= aspect_ratio;
+        }
+
+        let piece_size = 253.0;
+        let ratio = 620.0 / 2048.0;
+        let scaled_piece_size = piece_size * ratio;
+
+        let board_x = right / 2.0 - 620.0 / 2.0 + 4.0;
+        let board_y = bottom / 2.0 - 620.0 / 2.0 + 4.0;
+
+        let mut translation = Vec3::default();
+        translation[0] = board_x + self.board_x as f32 * scaled_piece_size;
+        translation[1] = board_y + self.board_y as f32 * scaled_piece_size;
+
+        let mut model = Mat4::identity();
+        model = translate(model, translation);
+        model = scale(model, Vec3::new(scaled_piece_size));
+
+        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+
+        atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
+        atlas_shader.set_mat4(
+            "projection\0",
+            projection.data.as_ptr() as *const gl::types::GLfloat,
+        )?;
         atlas_shader.set_float("piece_x\0", self.piece_x as gl::types::GLfloat)?;
         atlas_shader.set_float("piece_y\0", self.piece_y as gl::types::GLfloat)?;
-        atlas_shader.set_float("aspect_ratio\0", aspect_ratio)?;
 
         // Draw elements
         unsafe {
@@ -186,4 +219,26 @@ impl Draw for Piece {
 
         Ok(())
     }
+}
+
+// Right-handed, -1 to 1
+fn orthogonal_projection(
+    left: gl::types::GLfloat,
+    right: gl::types::GLfloat,
+    bottom: gl::types::GLfloat,
+    top: gl::types::GLfloat,
+    near: gl::types::GLfloat,
+    far: gl::types::GLfloat,
+) -> Mat4 {
+    let mut projection = Mat4::default();
+    projection[0][0] = 2.0 / (right - left);
+    projection[1][1] = 2.0 / (top - bottom);
+    projection[2][2] = -2.0 / (far - near);
+    projection[3][0] = -(right + left) / (right - left);
+    projection[3][1] = -(top + bottom) / (top - bottom);
+    projection[3][2] = -(far + near) / (far - near);
+
+    projection[3][3] = 1.0;
+
+    projection
 }

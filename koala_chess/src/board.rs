@@ -29,10 +29,10 @@ impl Board {
         #[rustfmt::skip]
         let vertices: [f32; 16] = [
             // positions, texture coordinates
+            0.0, 0.0,     0.0, 0.0, // top left
             1.0, 0.0,     1.0, 0.0, // top right
             1.0, 1.0,     1.0, 1.0, // bottom right
             0.0, 1.0,     0.0, 1.0, // bottom left
-            0.0, 0.0,     0.0, 0.0, // top left
         ];
 
         unsafe {
@@ -139,8 +139,6 @@ impl Draw for Board {
             bottom /= aspect_ratio;
         }
 
-        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
-
         let board_size = 620.0;
 
         // Calculate centering translation
@@ -153,10 +151,12 @@ impl Draw for Board {
         model = rotate_z(model, 0.0);
         model = scale(model, Vec3::new(board_size));
 
+        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+
         shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         shader.set_mat4(
             "projection\0",
-            projection.as_ptr() as *const gl::types::GLfloat,
+            projection.data.as_ptr() as *const gl::types::GLfloat,
         )?;
 
         // Draw elements
@@ -176,9 +176,8 @@ fn orthogonal_projection(
     top: gl::types::GLfloat,
     near: gl::types::GLfloat,
     far: gl::types::GLfloat,
-) -> [[gl::types::GLfloat; 4]; 4] {
-    // right handed, -1 to 1
-    let mut projection: [[gl::types::GLfloat; 4]; 4] = [[0.0; 4]; 4];
+) -> Mat4 {
+    let mut projection = Mat4::default();
     projection[0][0] = 2.0 / (right - left);
     projection[1][1] = 2.0 / (top - bottom);
     projection[2][2] = -2.0 / (far - near);
@@ -189,27 +188,4 @@ fn orthogonal_projection(
     projection[3][3] = 1.0;
 
     projection
-}
-
-// Left-handed, 0 to 1
-fn _orthogonal_projection_lh_zo(
-    left: gl::types::GLfloat,
-    right: gl::types::GLfloat,
-    bottom: gl::types::GLfloat,
-    top: gl::types::GLfloat,
-    near: gl::types::GLfloat,
-    far: gl::types::GLfloat,
-) -> *const gl::types::GLfloat {
-    // left handed, 0 to 1
-    let mut projection: [[gl::types::GLfloat; 4]; 4] = [[0.0; 4]; 4];
-    projection[0][0] = 2.0 / (right - left);
-    projection[1][1] = 2.0 / (top - bottom);
-    projection[2][2] = 1.0 / (far - near);
-    projection[3][0] = -(right + left) / (right - left);
-    projection[3][1] = -(top + bottom) / (top - bottom);
-    projection[3][2] = -near / (far - near);
-
-    projection[3][3] = 1.0;
-
-    projection.as_ptr() as *const gl::types::GLfloat
 }
