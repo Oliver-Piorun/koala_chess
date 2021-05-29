@@ -1,14 +1,13 @@
-use crate::shader::Shader;
 use crate::{
     bitmap,
     mat4::Mat4,
-    transformations::{rotate_z, translate},
+    shader::Shader,
+    traits::Draw,
+    transformations::{rotate_z, scale, translate},
     vec3::Vec3,
 };
-use crate::{traits::Draw, transformations::scale};
 use logger::*;
-use std::sync::Mutex;
-use std::{error::Error, lazy::SyncLazy};
+use std::{error::Error, lazy::SyncLazy, sync::Mutex};
 
 static SHADER: SyncLazy<Mutex<Option<Shader>>> = SyncLazy::new(|| Mutex::new(None));
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;

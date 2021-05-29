@@ -1,13 +1,13 @@
-use crate::bitmap;
-use crate::mat4::Mat4;
-use crate::shader::Shader;
-use crate::traits::Draw;
-use crate::transformations::scale;
-use crate::transformations::translate;
-use crate::vec3::Vec3;
+use crate::{
+    bitmap,
+    mat4::Mat4,
+    shader::Shader,
+    traits::Draw,
+    transformations::{scale, translate},
+    vec3::Vec3,
+};
 use logger::*;
-use std::sync::Mutex;
-use std::{error::Error, lazy::SyncLazy};
+use std::{error::Error, lazy::SyncLazy, sync::Mutex};
 
 pub enum PieceColor {
     White,
