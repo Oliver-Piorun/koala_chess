@@ -195,8 +195,11 @@ impl Draw for Piece {
         let board_y = bottom / 2.0 - 620.0 / 2.0 + 4.0;
 
         let mut translation = Vec3::default();
-        translation[0] = board_x + self.board_x as f32 * scaled_piece_size;
-        translation[1] = board_y + self.board_y as f32 * scaled_piece_size;
+
+        let corrected_board_x = (self.board_x as i8 - 7).abs();
+        let corrected_board_y = (self.board_y as i8 - 7).abs();
+        translation[0] = board_x + corrected_board_x as f32 * scaled_piece_size;
+        translation[1] = board_y + corrected_board_y as f32 * scaled_piece_size;
 
         let mut model = Mat4::identity();
         model = translate(model, translation);
