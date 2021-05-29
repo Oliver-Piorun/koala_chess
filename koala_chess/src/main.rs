@@ -7,6 +7,7 @@ mod game;
 mod mat4;
 mod piece;
 mod platform;
+mod projections;
 mod renderer;
 mod shader;
 mod traits;
