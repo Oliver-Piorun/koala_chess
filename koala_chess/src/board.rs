@@ -1,9 +1,13 @@
-use crate::bitmap;
-use crate::shader::Shader;
-use crate::traits::Draw;
+use crate::{
+    bitmap,
+    mat4::Mat4,
+    shader::Shader,
+    traits::Draw,
+    transformations::{rotate_z, scale, translate},
+    vec3::Vec3,
+};
 use logger::*;
-use std::sync::Mutex;
-use std::{error::Error, lazy::SyncLazy};
+use std::{error::Error, lazy::SyncLazy, sync::Mutex};
 
 static SHADER: SyncLazy<Mutex<Option<Shader>>> = SyncLazy::new(|| Mutex::new(None));
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
@@ -22,12 +26,12 @@ impl Board {
             .unwrap_or_else(|e| fatal!("Could not load board bitmap! ({})", e));
 
         #[rustfmt::skip]
-        let vertices: [f32; 32] = [
-            // positions,    colors,        texture coordinates
-             0.8,  0.8, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-             0.8, -0.8, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-            -0.8, -0.8, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-            -0.8,  0.8, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+        let vertices: [f32; 16] = [
+            // positions, texture coordinates
+            0.0, 0.0,     0.0, 0.0, // top left
+            1.0, 0.0,     1.0, 0.0, // top right
+            1.0, 1.0,     1.0, 1.0, // bottom right
+            0.0, 1.0,     0.0, 1.0, // bottom left
         ];
 
         unsafe {
@@ -102,35 +106,17 @@ impl Draw for Board {
             // Position attribute
             gl::VertexAttribPointer(
                 0,
-                3,
+                2,
                 gl::FLOAT,
                 gl::FALSE,
-                32,
+                16,
                 std::ptr::null::<std::ffi::c_void>(),
             );
             gl::EnableVertexAttribArray(0);
 
-            // Color attribute
-            gl::VertexAttribPointer(
-                1,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                12 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(1);
-
             // Texture coordinates attribute
-            gl::VertexAttribPointer(
-                2,
-                2,
-                gl::FLOAT,
-                gl::FALSE,
-                32,
-                24 as *const std::ffi::c_void,
-            );
-            gl::EnableVertexAttribArray(2);
+            gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, 16, 8 as *const std::ffi::c_void);
+            gl::EnableVertexAttribArray(1);
 
             // Bind texture
             gl::BindTexture(gl::TEXTURE_2D, TEXTURE);
@@ -142,7 +128,35 @@ impl Draw for Board {
             .unwrap_or_else(|e| fatal!("Could not lock shader mutex! ({})", e));
         let shader = shader_mutex.unwrap_or_else(|| fatal!("Shader has not been initialized yet!"));
         shader.r#use();
-        shader.set_float("aspect_ratio\0", aspect_ratio)?;
+
+        let mut right = 800.0;
+        let mut bottom = 800.0;
+
+        if aspect_ratio >= 1.0 {
+            right *= aspect_ratio;
+        } else {
+            bottom /= aspect_ratio;
+        }
+
+        let board_size = 620.0;
+
+        // Calculate centering translation
+        let mut translation = Vec3::default();
+        translation[0] = right / 2.0 - board_size / 2.0;
+        translation[1] = bottom / 2.0 - board_size / 2.0;
+
+        let mut model = Mat4::identity();
+        model = translate(model, translation);
+        model = rotate_z(model, 0.0);
+        model = scale(model, Vec3::new(board_size));
+
+        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+
+        shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
+        shader.set_mat4(
+            "projection\0",
+            projection.data.as_ptr() as *const gl::types::GLfloat,
+        )?;
 
         // Draw elements
         unsafe {
@@ -151,4 +165,26 @@ impl Draw for Board {
 
         Ok(())
     }
+}
+
+// Right-handed, -1 to 1
+fn orthogonal_projection(
+    left: gl::types::GLfloat,
+    right: gl::types::GLfloat,
+    bottom: gl::types::GLfloat,
+    top: gl::types::GLfloat,
+    near: gl::types::GLfloat,
+    far: gl::types::GLfloat,
+) -> Mat4 {
+    let mut projection = Mat4::default();
+    projection[0][0] = 2.0 / (right - left);
+    projection[1][1] = 2.0 / (top - bottom);
+    projection[2][2] = -2.0 / (far - near);
+    projection[3][0] = -(right + left) / (right - left);
+    projection[3][1] = -(top + bottom) / (top - bottom);
+    projection[3][2] = -(far + near) / (far - near);
+
+    projection[3][3] = 1.0;
+
+    projection
 }

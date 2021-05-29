@@ -1,6 +1,9 @@
-use crate::piece::{Piece, PieceColor, PieceKind};
-use crate::traits::Draw;
-use crate::{board::Board, shader};
+use crate::{
+    board::Board,
+    piece::{Piece, PieceColor, PieceKind},
+    shader,
+    traits::Draw,
+};
 use logger::*;
 use std::error::Error;
 
