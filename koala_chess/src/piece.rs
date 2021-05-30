@@ -1,9 +1,7 @@
 use crate::{
     bitmap,
     mat4::Mat4,
-    projections::orthogonal_projection,
     shader::Shader,
-    traits::Draw,
     transformations::{scale, translate},
     vec3::Vec3,
 };
@@ -29,6 +27,11 @@ static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
 pub struct Piece {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub rotation: f32,
     pub color: PieceColor,
     pub kind: PieceKind,
     pub board_x: u8,
@@ -55,6 +58,11 @@ impl Piece {
         };
 
         Piece {
+            x: 0.0,
+            y: 0.0,
+            width: 0.0,
+            height: 0.0,
+            rotation: 0.0,
             color,
             kind,
             board_x,
@@ -144,10 +152,8 @@ impl Piece {
             );
         }
     }
-}
 
-impl Draw for Piece {
-    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
+    pub fn draw(&self, projection: &Mat4) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -179,34 +185,10 @@ impl Draw for Piece {
             .unwrap_or_else(|| fatal!("Atlas shader has not been initialized yet!"));
         atlas_shader.r#use();
 
-        let mut right = 800.0;
-        let mut bottom = 800.0;
-
-        if aspect_ratio >= 1.0 {
-            right *= aspect_ratio;
-        } else {
-            bottom /= aspect_ratio;
-        }
-
-        let piece_size = 253.0;
-        let ratio = 620.0 / 2048.0;
-        let scaled_piece_size = piece_size * ratio;
-
-        let board_x = right / 2.0 - 620.0 / 2.0 + 4.0;
-        let board_y = bottom / 2.0 - 620.0 / 2.0 + 4.0;
-
-        let mut translation = Vec3::default();
-
-        let corrected_board_x = (self.board_x as i8 - 7).abs();
-        let corrected_board_y = (self.board_y as i8 - 7).abs();
-        translation[0] = board_x + corrected_board_x as f32 * scaled_piece_size;
-        translation[1] = board_y + corrected_board_y as f32 * scaled_piece_size;
-
+        // Calculate model
         let mut model = Mat4::identity();
-        model = translate(model, translation);
-        model = scale(model, Vec3::new(scaled_piece_size));
-
-        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+        model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
+        model = scale(model, Vec3::new_xyz(self.width, self.height, 1.0));
 
         atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         atlas_shader.set_mat4(

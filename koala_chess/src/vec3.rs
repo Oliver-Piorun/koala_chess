@@ -49,11 +49,20 @@ impl Mul<gl::types::GLfloat> for Vec3 {
 }
 
 impl Vec3 {
-    pub fn new(value: gl::types::GLfloat) -> Vec3 {
+    pub fn _new(value: gl::types::GLfloat) -> Vec3 {
         let mut result = Vec3::default();
         result[0] = value;
         result[1] = value;
         result[2] = value;
+
+        result
+    }
+
+    pub fn new_xyz(x: gl::types::GLfloat, y: gl::types::GLfloat, z: gl::types::GLfloat) -> Vec3 {
+        let mut result = Vec3::default();
+        result[0] = x;
+        result[1] = y;
+        result[2] = z;
 
         result
     }
