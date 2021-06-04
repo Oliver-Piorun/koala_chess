@@ -41,6 +41,9 @@ pub struct Piece {
 }
 
 impl Piece {
+    pub const TEXTURE_ATLAS_SIZE: i32 = 1024;
+    pub const TEXTURE_SIZE: i32 = 253;
+
     pub fn new(color: PieceColor, kind: PieceKind, board_x: u8, board_y: u8) -> Piece {
         let (piece_x, piece_y) = match (&color, &kind) {
             (PieceColor::White, PieceKind::Pawn) => (0, 2),
@@ -143,8 +146,8 @@ impl Piece {
                 gl::TEXTURE_2D,
                 0,
                 gl::RGBA8 as gl::types::GLint,
-                1024,
-                1024,
+                Piece::TEXTURE_ATLAS_SIZE,
+                Piece::TEXTURE_ATLAS_SIZE,
                 0,
                 gl::BGRA_EXT,
                 gl::UNSIGNED_BYTE,

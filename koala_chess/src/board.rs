@@ -21,6 +21,9 @@ pub struct Board {
 }
 
 impl Board {
+    pub const TEXTURE_SIZE: i32 = 2048;
+    pub const BORDER_TEXTURE_SIZE: i32 = 12;
+
     pub fn initialize(shader: Shader) {
         *SHADER
             .lock()
@@ -91,8 +94,8 @@ impl Board {
                 gl::TEXTURE_2D,
                 0,
                 gl::RGBA8 as gl::types::GLint,
-                2048,
-                2048,
+                Board::TEXTURE_SIZE,
+                Board::TEXTURE_SIZE,
                 0,
                 gl::BGRA_EXT,
                 gl::UNSIGNED_BYTE,

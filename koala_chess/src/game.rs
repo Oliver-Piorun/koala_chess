@@ -178,11 +178,9 @@ impl Game {
         self.board.draw(&projection)?;
 
         // Draw pieces
-        let ratio = self.board.width / 2048.0;
-        let piece_size = 253.0;
-        let border_size = 12.0;
-        let scaled_piece_size = piece_size * ratio;
-        let scaled_border_size = border_size * ratio;
+        let ratio = self.board.width / Board::TEXTURE_SIZE as f32;
+        let scaled_piece_size = Piece::TEXTURE_SIZE as f32 * ratio;
+        let scaled_border_size = Board::BORDER_TEXTURE_SIZE as f32 * ratio;
 
         for piece in self.pieces.iter_mut() {
             piece.x = self.board.x
