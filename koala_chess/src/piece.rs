@@ -1,8 +1,9 @@
 use crate::{
     bitmap,
+    board::Board,
     mat4::Mat4,
     shader::Shader,
-    transformations::{scale, translate},
+    transformations::{rotate_z, scale, translate},
     vec3::Vec3,
 };
 use logger::*;
@@ -156,7 +157,7 @@ impl Piece {
         }
     }
 
-    pub fn draw(&self, projection: &Mat4) -> Result<(), Box<dyn Error>> {
+    pub fn draw(&self, projection: &Mat4, board: &Board) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -191,6 +192,19 @@ impl Piece {
         // Calculate model
         let mut model = Mat4::identity();
         model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
+
+        if board.rotation != 0.0 {
+            let board_center_x = board.x + board.width / 2.0;
+            let board_center_y = board.y + board.height / 2.0;
+
+            let x_translation = board_center_x - self.x;
+            let y_translation = board_center_y - self.y;
+
+            model = translate(model, Vec3::new_xyz(x_translation, y_translation, 0.0));
+            model = rotate_z(model, board.rotation);
+            model = translate(model, Vec3::new_xyz(-x_translation, -y_translation, 0.0));
+        }
+
         model = scale(model, Vec3::new_xyz(self.width, self.height, 1.0));
 
         atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;

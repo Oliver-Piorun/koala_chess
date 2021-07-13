@@ -140,7 +140,12 @@ impl Board {
         model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
 
         if self.rotation != 0.0 {
+            let x_translation = self.width / 2.0;
+            let y_translation = self.height / 2.0;
+
+            model = translate(model, Vec3::new_xyz(x_translation, y_translation, 0.0));
             model = rotate_z(model, self.rotation);
+            model = translate(model, Vec3::new_xyz(-x_translation, -y_translation, 0.0));
         }
 
         model = scale(model, Vec3::new_xyz(self.width, self.height, 1.0));

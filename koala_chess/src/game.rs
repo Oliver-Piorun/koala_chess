@@ -174,6 +174,9 @@ impl Game {
         self.board.x = self.world_width / 2.0 - self.board.width / 2.0;
         self.board.y = self.world_height / 2.0 - self.board.height / 2.0;
 
+        // TODO: Remove temporary rotation
+        self.board.rotation = 45.0;
+
         // Draw board
         self.board.draw(&projection)?;
 
@@ -192,7 +195,7 @@ impl Game {
             piece.width = scaled_piece_size;
             piece.height = scaled_piece_size;
 
-            piece.draw(&projection)?;
+            piece.draw(&projection, &self.board)?;
         }
 
         Ok(())
