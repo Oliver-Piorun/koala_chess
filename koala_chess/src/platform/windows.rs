@@ -1,6 +1,5 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
-use crate::traits::Draw;
 use logger::*;
 use std::ffi::{CString, OsStr};
 use std::io;
@@ -115,7 +114,7 @@ pub fn create_window() -> HWND {
     window
 }
 
-pub fn r#loop(window: HWND, game: Game) {
+pub fn r#loop(window: HWND, game: &mut Game) {
     let device_context = unsafe { GetDC(window) };
 
     // The frequency of the performance counter is fixed at system boot and is consistent across all processors

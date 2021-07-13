@@ -1,6 +1,5 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
-use crate::traits::Draw;
 use logger::*;
 use std::lazy::SyncLazy;
 use std::os::raw::{c_int, c_uint};
@@ -284,7 +283,7 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
     }
 }
 
-pub fn r#loop(display: *mut xlib::Display, window: u64, game: Game) {
+pub fn r#loop(display: *mut xlib::Display, window: u64, game: &mut Game) {
     unsafe {
         let wm_protocols_str =
             CString::new("WM_PROTOCOLS").unwrap_or_else(|_| fatal!("Could not create CString!"));

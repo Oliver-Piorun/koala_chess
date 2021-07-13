@@ -7,9 +7,9 @@ mod game;
 mod mat4;
 mod piece;
 mod platform;
+mod projections;
 mod renderer;
 mod shader;
-mod traits;
 mod transformations;
 mod vec3;
 mod vec4;
@@ -23,10 +23,10 @@ fn main() {
 
     // Initialize the game
     Game::initialize();
-    let game = Game::new();
+    let mut game = Game::new();
 
     // Enter the game loop
-    platform::windows::r#loop(window, game);
+    platform::windows::r#loop(window, &mut game);
 }
 
 #[cfg(target_family = "unix")]
@@ -36,8 +36,8 @@ fn main() {
 
     // Initialize the game
     Game::initialize();
-    let game = Game::new();
+    let mut game = Game::new();
 
     // Enter the game loop
-    platform::unix::r#loop(display, window, game)
+    platform::unix::r#loop(display, window, &mut game)
 }

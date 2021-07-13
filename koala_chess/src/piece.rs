@@ -1,9 +1,9 @@
 use crate::{
     bitmap,
+    board::Board,
     mat4::Mat4,
     shader::Shader,
-    traits::Draw,
-    transformations::{scale, translate},
+    transformations::{rotate_z, scale, translate},
     vec3::Vec3,
 };
 use logger::*;
@@ -28,6 +28,11 @@ static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
 pub struct Piece {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub rotation: f32,
     pub color: PieceColor,
     pub kind: PieceKind,
     pub board_x: u8,
@@ -37,6 +42,9 @@ pub struct Piece {
 }
 
 impl Piece {
+    pub const TEXTURE_ATLAS_SIZE: i32 = 1024;
+    pub const TEXTURE_SIZE: i32 = 253;
+
     pub fn new(color: PieceColor, kind: PieceKind, board_x: u8, board_y: u8) -> Piece {
         let (piece_x, piece_y) = match (&color, &kind) {
             (PieceColor::White, PieceKind::Pawn) => (0, 2),
@@ -54,6 +62,11 @@ impl Piece {
         };
 
         Piece {
+            x: 0.0,
+            y: 0.0,
+            width: 0.0,
+            height: 0.0,
+            rotation: 0.0,
             color,
             kind,
             board_x,
@@ -134,8 +147,8 @@ impl Piece {
                 gl::TEXTURE_2D,
                 0,
                 gl::RGBA8 as gl::types::GLint,
-                1024,
-                1024,
+                Piece::TEXTURE_ATLAS_SIZE,
+                Piece::TEXTURE_ATLAS_SIZE,
                 0,
                 gl::BGRA_EXT,
                 gl::UNSIGNED_BYTE,
@@ -143,10 +156,8 @@ impl Piece {
             );
         }
     }
-}
 
-impl Draw for Piece {
-    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
+    pub fn draw(&self, projection: &Mat4, board: &Board) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -178,34 +189,23 @@ impl Draw for Piece {
             .unwrap_or_else(|| fatal!("Atlas shader has not been initialized yet!"));
         atlas_shader.r#use();
 
-        let mut right = 800.0;
-        let mut bottom = 800.0;
+        // Calculate model
+        let mut model = Mat4::identity();
+        model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
 
-        if aspect_ratio >= 1.0 {
-            right *= aspect_ratio;
-        } else {
-            bottom /= aspect_ratio;
+        if board.rotation != 0.0 {
+            let board_center_x = board.x + board.width / 2.0;
+            let board_center_y = board.y + board.height / 2.0;
+
+            let x_translation = board_center_x - self.x;
+            let y_translation = board_center_y - self.y;
+
+            model = translate(model, Vec3::new_xyz(x_translation, y_translation, 0.0));
+            model = rotate_z(model, board.rotation);
+            model = translate(model, Vec3::new_xyz(-x_translation, -y_translation, 0.0));
         }
 
-        let piece_size = 253.0;
-        let ratio = 620.0 / 2048.0;
-        let scaled_piece_size = piece_size * ratio;
-
-        let board_x = right / 2.0 - 620.0 / 2.0 + 4.0;
-        let board_y = bottom / 2.0 - 620.0 / 2.0 + 4.0;
-
-        let mut translation = Vec3::default();
-
-        let corrected_board_x = (self.board_x as i8 - 7).abs();
-        let corrected_board_y = (self.board_y as i8 - 7).abs();
-        translation[0] = board_x + corrected_board_x as f32 * scaled_piece_size;
-        translation[1] = board_y + corrected_board_y as f32 * scaled_piece_size;
-
-        let mut model = Mat4::identity();
-        model = translate(model, translation);
-        model = scale(model, Vec3::new(scaled_piece_size));
-
-        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+        model = scale(model, Vec3::new_xyz(self.width, self.height, 1.0));
 
         atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         atlas_shader.set_mat4(
@@ -222,26 +222,4 @@ impl Draw for Piece {
 
         Ok(())
     }
-}
-
-// Right-handed, -1 to 1
-fn orthogonal_projection(
-    left: gl::types::GLfloat,
-    right: gl::types::GLfloat,
-    bottom: gl::types::GLfloat,
-    top: gl::types::GLfloat,
-    near: gl::types::GLfloat,
-    far: gl::types::GLfloat,
-) -> Mat4 {
-    let mut projection = Mat4::default();
-    projection[0][0] = 2.0 / (right - left);
-    projection[1][1] = 2.0 / (top - bottom);
-    projection[2][2] = -2.0 / (far - near);
-    projection[3][0] = -(right + left) / (right - left);
-    projection[3][1] = -(top + bottom) / (top - bottom);
-    projection[3][2] = -(far + near) / (far - near);
-
-    projection[3][3] = 1.0;
-
-    projection
 }

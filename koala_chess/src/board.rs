@@ -2,7 +2,6 @@ use crate::{
     bitmap,
     mat4::Mat4,
     shader::Shader,
-    traits::Draw,
     transformations::{rotate_z, scale, translate},
     vec3::Vec3,
 };
@@ -13,9 +12,18 @@ static SHADER: SyncLazy<Mutex<Option<Shader>>> = SyncLazy::new(|| Mutex::new(Non
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
-pub struct Board;
+pub struct Board {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub rotation: f32,
+}
 
 impl Board {
+    pub const TEXTURE_SIZE: i32 = 2048;
+    pub const BORDER_TEXTURE_SIZE: i32 = 12;
+
     pub fn initialize(shader: Shader) {
         *SHADER
             .lock()
@@ -86,8 +94,8 @@ impl Board {
                 gl::TEXTURE_2D,
                 0,
                 gl::RGBA8 as gl::types::GLint,
-                2048,
-                2048,
+                Board::TEXTURE_SIZE,
+                Board::TEXTURE_SIZE,
                 0,
                 gl::BGRA_EXT,
                 gl::UNSIGNED_BYTE,
@@ -95,10 +103,8 @@ impl Board {
             );
         }
     }
-}
 
-impl Draw for Board {
-    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
+    pub fn draw(&self, projection: &Mat4) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -129,28 +135,20 @@ impl Draw for Board {
         let shader = shader_mutex.unwrap_or_else(|| fatal!("Shader has not been initialized yet!"));
         shader.r#use();
 
-        let mut right = 800.0;
-        let mut bottom = 800.0;
+        // Calculate model
+        let mut model = Mat4::identity();
+        model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
 
-        if aspect_ratio >= 1.0 {
-            right *= aspect_ratio;
-        } else {
-            bottom /= aspect_ratio;
+        if self.rotation != 0.0 {
+            let x_translation = self.width / 2.0;
+            let y_translation = self.height / 2.0;
+
+            model = translate(model, Vec3::new_xyz(x_translation, y_translation, 0.0));
+            model = rotate_z(model, self.rotation);
+            model = translate(model, Vec3::new_xyz(-x_translation, -y_translation, 0.0));
         }
 
-        let board_size = 620.0;
-
-        // Calculate centering translation
-        let mut translation = Vec3::default();
-        translation[0] = right / 2.0 - board_size / 2.0;
-        translation[1] = bottom / 2.0 - board_size / 2.0;
-
-        let mut model = Mat4::identity();
-        model = translate(model, translation);
-        model = rotate_z(model, 0.0);
-        model = scale(model, Vec3::new(board_size));
-
-        let projection = orthogonal_projection(0.0, right, bottom, 0.0, -1.0, 1.0);
+        model = scale(model, Vec3::new_xyz(self.width, self.height, 1.0));
 
         shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         shader.set_mat4(
@@ -165,26 +163,4 @@ impl Draw for Board {
 
         Ok(())
     }
-}
-
-// Right-handed, -1 to 1
-fn orthogonal_projection(
-    left: gl::types::GLfloat,
-    right: gl::types::GLfloat,
-    bottom: gl::types::GLfloat,
-    top: gl::types::GLfloat,
-    near: gl::types::GLfloat,
-    far: gl::types::GLfloat,
-) -> Mat4 {
-    let mut projection = Mat4::default();
-    projection[0][0] = 2.0 / (right - left);
-    projection[1][1] = 2.0 / (top - bottom);
-    projection[2][2] = -2.0 / (far - near);
-    projection[3][0] = -(right + left) / (right - left);
-    projection[3][1] = -(top + bottom) / (top - bottom);
-    projection[3][2] = -(far + near) / (far - near);
-
-    projection[3][3] = 1.0;
-
-    projection
 }

@@ -1,20 +1,29 @@
 use crate::{
     board::Board,
     piece::{Piece, PieceColor, PieceKind},
+    projections::orthogonal_projection,
     shader,
-    traits::Draw,
 };
 use logger::*;
 use std::error::Error;
 
 pub struct Game {
+    pub aspect_ratio: f32,
+    pub world_width: f32,
+    pub world_height: f32,
     pub board: Board,
     pub pieces: Vec<Piece>,
 }
 
 impl Game {
     pub fn new() -> Game {
-        let board = Board;
+        let board = Board {
+            x: 0.0,
+            y: 0.0,
+            width: 620.0,
+            height: 620.0,
+            rotation: 0.0,
+        };
 
         let mut pieces: Vec<Piece> = Vec::new();
 
@@ -83,7 +92,13 @@ impl Game {
         pieces.push(white_king);
         pieces.push(black_king);
 
-        Game { board, pieces }
+        Game {
+            aspect_ratio: 0.0,
+            world_width: 800.0,
+            world_height: 800.0,
+            board,
+            pieces,
+        }
     }
 
     pub fn initialize() {
@@ -131,10 +146,8 @@ impl Game {
             gl::GenerateMipmap(gl::TEXTURE_2D);
         }
     }
-}
 
-impl Draw for Game {
-    fn draw(&self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
+    pub fn draw(&mut self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Set the clear color
             gl::ClearColor(0.17, 0.32, 0.59, 0.0);
@@ -143,12 +156,46 @@ impl Draw for Game {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
+        self.aspect_ratio = aspect_ratio;
+        self.world_width = 800.0;
+        self.world_height = 800.0;
+
+        if self.aspect_ratio >= 1.0 {
+            self.world_width *= self.aspect_ratio;
+        } else {
+            self.world_height /= self.aspect_ratio;
+        }
+
+        // Calculate projection
+        let projection =
+            orthogonal_projection(0.0, self.world_width, self.world_height, 0.0, -1.0, 1.0);
+
+        // Center board
+        self.board.x = self.world_width / 2.0 - self.board.width / 2.0;
+        self.board.y = self.world_height / 2.0 - self.board.height / 2.0;
+
+        // TODO: Remove temporary rotation
+        self.board.rotation = 45.0;
+
         // Draw board
-        self.board.draw(aspect_ratio)?;
+        self.board.draw(&projection)?;
 
         // Draw pieces
-        for piece in self.pieces.iter() {
-            piece.draw(aspect_ratio)?;
+        let ratio = self.board.width / Board::TEXTURE_SIZE as f32;
+        let scaled_piece_size = Piece::TEXTURE_SIZE as f32 * ratio;
+        let scaled_border_size = Board::BORDER_TEXTURE_SIZE as f32 * ratio;
+
+        for piece in self.pieces.iter_mut() {
+            piece.x = self.board.x
+                + scaled_border_size
+                + (piece.board_x as i8 - 7).abs() as f32 * scaled_piece_size;
+            piece.y = self.board.y
+                + scaled_border_size
+                + (piece.board_y as i8 - 7).abs() as f32 * scaled_piece_size;
+            piece.width = scaled_piece_size;
+            piece.height = scaled_piece_size;
+
+            piece.draw(&projection, &self.board)?;
         }
 
         Ok(())
