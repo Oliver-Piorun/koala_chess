@@ -1,6 +1,7 @@
 use crate::{
     bitmap,
     mat4::Mat4,
+    piece::PieceColor,
     shader::Shader,
     transformations::{rotate_z, scale, translate},
     vec3::Vec3,
@@ -18,6 +19,7 @@ pub struct Board {
     pub width: f32,
     pub height: f32,
     pub rotation: f32,
+    pub pov: PieceColor,
 }
 
 impl Board {

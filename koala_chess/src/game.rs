@@ -23,6 +23,7 @@ impl Game {
             width: 620.0,
             height: 620.0,
             rotation: 0.0,
+            pov: PieceColor::White,
         };
 
         let mut pieces: Vec<Piece> = Vec::new();
