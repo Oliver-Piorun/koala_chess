@@ -23,7 +23,7 @@ impl Game {
             width: 620.0,
             height: 620.0,
             rotation: 0.0,
-            pov: PieceColor::White,
+            pov: PieceColor::Black,
         };
 
         let mut pieces: Vec<Piece> = Vec::new();
@@ -175,8 +175,13 @@ impl Game {
         self.board.x = self.world_width / 2.0 - self.board.width / 2.0;
         self.board.y = self.world_height / 2.0 - self.board.height / 2.0;
 
-        // TODO: Remove temporary rotation
-        self.board.rotation = 45.0;
+        if self.board.pov == PieceColor::White {
+            // Reset board rotation
+            self.board.rotation = 0.0;
+        } else {
+            // Rotate the board by 180 degrees (clock-wise)
+            self.board.rotation = 180.0;
+        }
 
         // Draw board
         self.board.draw(&projection)?;

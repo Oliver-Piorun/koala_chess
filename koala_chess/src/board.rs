@@ -142,6 +142,7 @@ impl Board {
         model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
 
         if self.rotation != 0.0 {
+            // Rotate around board center (clock-wise)
             let x_translation = self.width / 2.0;
             let y_translation = self.height / 2.0;
 
