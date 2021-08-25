@@ -1,5 +1,5 @@
 use crate::piece::PieceColor;
 
-pub struct Player {
+pub struct _Player {
     pub piece_color: PieceColor,
 }
