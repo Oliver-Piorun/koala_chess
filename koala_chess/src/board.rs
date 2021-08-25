@@ -1,6 +1,7 @@
 use crate::{
     bitmap,
     mat4::Mat4,
+    piece::PieceColor,
     shader::Shader,
     transformations::{rotate_z, scale, translate},
     vec3::Vec3,
@@ -18,6 +19,7 @@ pub struct Board {
     pub width: f32,
     pub height: f32,
     pub rotation: f32,
+    pub pov: PieceColor,
 }
 
 impl Board {
@@ -140,6 +142,7 @@ impl Board {
         model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
 
         if self.rotation != 0.0 {
+            // Rotate around board center (clock-wise)
             let x_translation = self.width / 2.0;
             let y_translation = self.height / 2.0;
 

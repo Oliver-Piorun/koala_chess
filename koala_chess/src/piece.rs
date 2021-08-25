@@ -9,6 +9,7 @@ use crate::{
 use logger::*;
 use std::{error::Error, lazy::SyncLazy, sync::Mutex};
 
+#[derive(PartialEq)]
 pub enum PieceColor {
     White,
     Black,
@@ -194,6 +195,7 @@ impl Piece {
         model = translate(model, Vec3::new_xyz(self.x, self.y, 0.0));
 
         if board.rotation != 0.0 {
+            // Rotate around board center (clock-wise)
             let board_center_x = board.x + board.width / 2.0;
             let board_center_y = board.y + board.height / 2.0;
 
@@ -202,6 +204,20 @@ impl Piece {
 
             model = translate(model, Vec3::new_xyz(x_translation, y_translation, 0.0));
             model = rotate_z(model, board.rotation);
+            model = translate(model, Vec3::new_xyz(-x_translation, -y_translation, 0.0));
+
+            // Rotate around piece center
+            let piece_center_x = self.x + self.width / 2.0;
+            let piece_center_y = self.y + self.height / 2.0;
+
+            let x_translation = piece_center_x - self.x;
+            let y_translation = piece_center_y - self.y;
+
+            model = translate(model, Vec3::new_xyz(x_translation, y_translation, 0.0));
+
+            // Reset piece rotation, so that the piece is always facing upwards
+            model = rotate_z(model, 0.0);
+
             model = translate(model, Vec3::new_xyz(-x_translation, -y_translation, 0.0));
         }
 
