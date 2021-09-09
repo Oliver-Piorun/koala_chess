@@ -1,5 +1,5 @@
 [package]
-name = "glx"
+name = "wgl"
 version = "0.1.0"
 authors = ["Oliver Piorun <Oliver.Piorun@ruhr-uni-bochum.de>"]
 edition = "2021"

@@ -403,7 +403,7 @@ fn get_address(function_name: &str) -> *const std::ffi::c_void {
     let null_terminated_function_name = CString::new(function_name)
         .unwrap_or_else(|_| fatal!("Could not create CString! ({})", function_name));
 
-    // Get address
+    // Get address (via glXGetProcAddress)
     let address = unsafe {
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXGetProcAddress.xml
         glx::GetProcAddress(
@@ -412,7 +412,7 @@ fn get_address(function_name: &str) -> *const std::ffi::c_void {
     };
 
     if address.is_null() {
-        fatal!("Could not get address ({})!", function_name);
+        fatal!("Could not get address! ({})", function_name);
     }
 
     address as *const std::ffi::c_void
@@ -424,14 +424,13 @@ unsafe fn is_extension_supported(
     screen: glx::types::GLint,
 ) -> Result<bool, Box<dyn Error>> {
     // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXQueryExtensionsString.xml
-    let query_extension_string_raw = glx::QueryExtensionsString(
+    let query_extensions_string_raw = glx::QueryExtensionsString(
         display as *mut glx::types::Display, // dpy
         screen,                              // screen
     );
 
-    let query_extension_string_cstring =
-        std::ffi::CString::from_raw(query_extension_string_raw as *mut i8);
-    let query_extension_string_str = query_extension_string_cstring.to_str()?;
+    let query_extensions_string_cstring = CString::from_raw(query_extensions_string_raw as *mut i8);
+    let query_extensions_string_str = query_extensions_string_cstring.to_str()?;
 
-    Ok(query_extension_string_str.contains(extension))
+    Ok(query_extensions_string_str.contains(extension))
 }

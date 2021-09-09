@@ -12,7 +12,9 @@ fn main() {
         (1, 4),
         Profile::Core,
         Fallbacks::All,
-        ["GLX_ARB_create_context"],
+        [
+            "GLX_ARB_create_context", // For glXCreateContextAttribsARB(...)
+        ],
     )
     .write_bindings(GlobalGenerator, &mut file)
     .unwrap_or_else(|e| panic!("Could not create bindings! ({})", e));

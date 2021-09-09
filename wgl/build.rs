@@ -8,12 +8,13 @@ fn main() {
         .unwrap_or_else(|e| panic!("Could not create bindings.rs file! ({})", e));
 
     Registry::new(
-        Api::Gles2,
-        (3, 2),
+        Api::Wgl,
+        (1, 0),
         Profile::Core,
         Fallbacks::All,
         [
-            "GL_EXT_texture_format_BGRA8888", // For GL_BGRA_EXT
+            "WGL_ARB_create_context",    // For wglCreateContextAttribsARB(...)
+            "WGL_ARB_extensions_string", // For wglGetExtensionsStringARB(...)
         ],
     )
     .write_bindings(GlobalGenerator, &mut file)
