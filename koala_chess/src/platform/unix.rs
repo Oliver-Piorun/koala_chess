@@ -430,7 +430,7 @@ unsafe fn is_extension_supported(
     );
 
     let query_extensions_string_cstring = CString::from_raw(query_extensions_string_raw as *mut i8);
-    let query_extension_string_str = query_extensions_string_cstring.to_str()?;
+    let query_extensions_string_str = query_extensions_string_cstring.to_str()?;
 
     Ok(query_extensions_string_str.contains(extension))
 }
