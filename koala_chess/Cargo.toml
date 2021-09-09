@@ -11,6 +11,7 @@ gl = { path = "../gl" }
 logger = { path = "../logger" }
 
 [target.'cfg(windows)'.dependencies]
+wgl = { path = "../wgl" }
 winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "profileapi", "impl-default"] }
 
 [target.'cfg(unix)'.dependencies]

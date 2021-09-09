@@ -1,6 +1,7 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
 use logger::*;
+use std::error::Error;
 use std::ffi::{CString, OsStr};
 use std::io;
 use std::lazy::SyncLazy;
@@ -9,10 +10,11 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
 };
+use winapi::um::wingdi::wglDeleteContext;
 use winapi::{
     shared::{
         minwindef::{ATOM, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},
-        windef::{HDC, HWND, RECT},
+        windef::{HDC, HGLRC, HWND, RECT},
     },
     um::{
         libloaderapi::{GetModuleHandleW, GetProcAddress, LoadLibraryW},
@@ -193,19 +195,70 @@ fn initialize_open_gl(window: HWND) {
     let rendering_context = unsafe { wglCreateContext(device_context) };
 
     if rendering_context.is_null() {
-        fatal!("Could not create OpenGL rendering context!");
+        fatal!("Could not create a OpenGL rendering context!");
     }
 
-    if unsafe { wglMakeCurrent(device_context, rendering_context) } == 0 {
+    if unsafe {
+        wglMakeCurrent(
+            device_context,                                     // hdc
+            rendering_context as winapi::shared::windef::HGLRC, // hglrc
+        )
+    } == 0
+    {
         fatal!(
             "wglMakeCurrent failed! (os error: {})",
             io::Error::last_os_error()
         );
     }
 
+    // We need a context to initialize the WGL addresses
+    initialize_wgl_addresses();
+
+    let extension_supported =
+        unsafe { is_extension_supported("WGL_ARB_create_context", device_context) }
+            .unwrap_or(false);
+
+    if extension_supported {
+        #[rustfmt::skip]
+        let context_attributes = vec![
+            wgl::CONTEXT_MAJOR_VERSION_ARB as wgl::types::GLint, 3,
+            wgl::CONTEXT_MINOR_VERSION_ARB as wgl::types::GLint, 2,
+            0, // This has to be the last item
+        ];
+
+        let new_rendering_context = unsafe {
+            wgl::CreateContextAttribsARB(
+                device_context as wgl::types::HDC, // hDC,
+                0 as wgl::types::HGLRC,            // hShareContext
+                context_attributes.as_ptr(),       // attribList
+            ) as HGLRC
+        };
+
+        if new_rendering_context.is_null() {
+            fatal!("Could not create OpenGL rendering context!");
+        }
+
+        if unsafe { wglMakeCurrent(device_context, new_rendering_context) } == 0 {
+            fatal!(
+                "wglMakeCurrent failed! (os error: {})",
+                io::Error::last_os_error()
+            );
+        }
+
+        if unsafe { wglDeleteContext(rendering_context) } == 0 {
+            fatal!(
+                "wglDeleteContext failed! (os error: {})",
+                io::Error::last_os_error()
+            );
+        }
+    }
+
     unsafe { ReleaseDC(window, device_context) };
 
-    initialize_open_gl_addresses();
+    load_open_gl_module();
+
+    // We need a loaded OpenGL module and a context to initialize the OpenGL addresses
+    open_gl::initialize_open_gl_addresses(get_address);
 
     INITIALIZED_OPEN_GL.store(true, Ordering::SeqCst);
 }
@@ -269,7 +322,13 @@ fn negotiate_pixel_format(device_context: HDC) {
     };
 }
 
-fn initialize_open_gl_addresses() {
+fn initialize_wgl_addresses() {
+    // Get and assign addresses
+    let _ = wgl::CreateContextAttribsARB::load_with(|function_name| get_address(function_name));
+    let _ = wgl::GetExtensionsStringARB::load_with(|function_name| get_address(function_name));
+}
+
+fn load_open_gl_module() {
     // Create module name
     let module_name = OsStr::new("opengl32.dll\0")
         .encode_wide()
@@ -289,11 +348,9 @@ fn initialize_open_gl_addresses() {
         .lock()
         .unwrap_or_else(|e| fatal!("Could not lock OpenGL module handle mutex! ({})", e)) =
         ModuleHandle(module);
-
-    open_gl::initialize_open_gl_addresses(get_open_gl_address)
 }
 
-fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
+fn get_address(function_name: &str) -> *const std::ffi::c_void {
     // Create null-terminated function name
     let null_terminated_function_name = CString::new(function_name)
         .unwrap_or_else(|_| fatal!("Could not create CString! ({})", function_name));
@@ -319,13 +376,24 @@ fn get_open_gl_address(function_name: &str) -> *const std::ffi::c_void {
 
     if address.is_null() {
         fatal!(
-            "Could not get OpenGL address! ({}) (os error: {})",
+            "Could not get address! ({}) (os error: {})",
             function_name,
             io::Error::last_os_error()
         );
     }
 
     address as *const std::ffi::c_void
+}
+
+unsafe fn is_extension_supported(extension: &str, hdc: HDC) -> Result<bool, Box<dyn Error>> {
+    let extensions_string_raw = wgl::GetExtensionsStringARB(hdc as *const std::ffi::c_void);
+
+    let extensions_string_cstring = CString::from_raw(extensions_string_raw as *mut i8);
+    let extensions_string_str = extensions_string_cstring.to_str()?;
+
+    println!("{}", extensions_string_str);
+
+    Ok(extensions_string_str.contains(extension))
 }
 
 unsafe extern "system" fn window_proc(
