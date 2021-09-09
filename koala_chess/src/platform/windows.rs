@@ -391,8 +391,6 @@ unsafe fn is_extension_supported(extension: &str, hdc: HDC) -> Result<bool, Box<
     let extensions_string_cstring = CString::from_raw(extensions_string_raw as *mut i8);
     let extensions_string_str = extensions_string_cstring.to_str()?;
 
-    println!("{}", extensions_string_str);
-
     Ok(extensions_string_str.contains(extension))
 }
 
