@@ -296,12 +296,12 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: &mut Game) {
             }
 
             // Rendering
-            let aspect_ratio_mutex = *ASPECT_RATIO
+            let aspect_ratio = *ASPECT_RATIO
                 .lock()
                 .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
 
             // Draw game
-            if let Err(e) = game.draw(aspect_ratio_mutex) {
+            if let Err(e) = game.draw(aspect_ratio) {
                 error!("{}", e);
             }
 
