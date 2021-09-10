@@ -244,59 +244,94 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: &mut Game) {
             event_uninit.assume_init()
         };
 
-        // Window loop
-        loop {
-            xlib::XNextEvent(display, &mut event);
+        let mut last_time = libc::timespec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        };
 
-            if event.type_ == xlib::Expose {
-                let mut attributes = {
-                    let attributes_uninit = MaybeUninit::uninit();
+        if libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut last_time) == -1 {
+            fatal!("clock_gettime failed!");
+        }
 
-                    attributes_uninit.assume_init()
-                };
-                xlib::XGetWindowAttributes(display, window, &mut attributes);
-                let width = attributes.width;
-                let height = attributes.height;
-                let aspect_ratio = width as f32 / height as f32;
-                info!(
-                    "Expose: width: {} / height: {} / aspect_ratio: {}",
-                    width, height, aspect_ratio
-                );
+        'outer: loop {
+            // Window loop
+            while { xlib::XPending(display) } > 0 {
+                xlib::XNextEvent(display, &mut event);
 
-                *ASPECT_RATIO
-                    .lock()
-                    .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e)) =
-                    aspect_ratio;
+                if event.type_ == xlib::Expose {
+                    let mut attributes = {
+                        let attributes_uninit = MaybeUninit::uninit();
 
-                // Set viewport
-                gl::Viewport(0, 0, width, height);
-            }
+                        attributes_uninit.assume_init()
+                    };
+                    xlib::XGetWindowAttributes(display, window, &mut attributes);
+                    let width = attributes.width;
+                    let height = attributes.height;
+                    let aspect_ratio = width as f32 / height as f32;
+                    info!(
+                        "Expose: width: {} / height: {} / aspect_ratio: {}",
+                        width, height, aspect_ratio
+                    );
 
-            if let xlib::ClientMessage = event.get_type() {
-                let xclient = xlib::XClientMessageEvent::from(event);
+                    *ASPECT_RATIO
+                        .lock()
+                        .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e)) =
+                        aspect_ratio;
 
-                if xclient.message_type == wm_protocols && xclient.format == 32 {
-                    let protocol = xclient.data.get_long(0) as xlib::Atom;
+                    // Set viewport
+                    gl::Viewport(0, 0, width, height);
+                }
 
-                    if protocol == wm_delete_window {
-                        break;
+                if let xlib::ClientMessage = event.get_type() {
+                    let xclient = xlib::XClientMessageEvent::from(event);
+
+                    if xclient.message_type == wm_protocols && xclient.format == 32 {
+                        let protocol = xclient.data.get_long(0) as xlib::Atom;
+
+                        if protocol == wm_delete_window {
+                            break 'outer;
+                        }
                     }
                 }
             }
 
             // Rendering
-            let aspect_ratio_mutex = *ASPECT_RATIO
+            let aspect_ratio = *ASPECT_RATIO
                 .lock()
                 .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
 
             // Draw game
-            if let Err(e) = game.draw(aspect_ratio_mutex) {
+            if let Err(e) = game.draw(aspect_ratio) {
                 error!("{}", e);
             }
 
             glx::SwapBuffers(display as *mut glx::types::Display, window);
 
-            // TODO: Metrics
+            // Metrics
+            let mut end_time = libc::timespec {
+                tv_sec: 0,
+                tv_nsec: 0,
+            };
+
+            if libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut end_time) == -1 {
+                fatal!("clock_gettime failed!");
+            }
+
+            // ms = end time - last time
+            let elapsed_milliseconds = end_time.tv_sec as f64 * 1_000f64
+                + end_time.tv_nsec as f64 * 1e-6
+                - last_time.tv_sec as f64 * 1_000f64
+                - last_time.tv_nsec as f64 * 1e-6;
+
+            // 1/s = 1000 / elapsed milliseconds
+            let frames_per_second = 1_000f64 / elapsed_milliseconds;
+
+            println!(
+                "frames per second: {} / frame time: {}ms",
+                frames_per_second, elapsed_milliseconds
+            );
+
+            last_time = end_time;
         }
     }
 }

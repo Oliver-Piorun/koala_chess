@@ -147,12 +147,12 @@ pub fn r#loop(window: HWND, game: &mut Game) {
         }
 
         // Rendering
-        let aspect_ratio_mutex = *ASPECT_RATIO
+        let aspect_ratio = *ASPECT_RATIO
             .lock()
             .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
 
         // Draw game
-        if let Err(e) = game.draw(aspect_ratio_mutex) {
+        if let Err(e) = game.draw(aspect_ratio) {
             error!("{}", e);
         }
 
@@ -166,7 +166,7 @@ pub fn r#loop(window: HWND, game: &mut Game) {
             unsafe { end_performance_counter.QuadPart() - last_performance_counter.QuadPart() };
 
         // ms = 1000 * counter / (counter / s) = 1000 * counter * (s / counter)
-        let elapsed_milliseconds = 1000f64 * elapsed_performance_counter as f64
+        let elapsed_milliseconds = 1_000f64 * elapsed_performance_counter as f64
             / unsafe { *performance_frequency.QuadPart() as f64 };
 
         // 1/s = (counter / s) / counter
