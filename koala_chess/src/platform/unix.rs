@@ -147,62 +147,12 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
             fatal!("Could not get a visual info from the framebuffer config!");
         }
 
-        let context;
-
-        let extension_supported = is_extension_supported(
-            "GLX_ARB_create_context",
-            display as *mut glx::types::Display,
-            screen_id,
-        )
-        .unwrap_or(false);
-
-        if !extension_supported {
-            // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXCreateNewContext.xml
-            context = glx::CreateNewContext(
-                display as *mut glx::types::Display, // dpy
-                best_framebuffer_config,             // config
-                glx::RGBA_TYPE as i32,               // render_type
-                std::ptr::null::<c_void>(),          // share_list
-                true as i32,                         // direct
-            );
-        } else {
-            #[rustfmt::skip]
-            let context_attributes = vec![
-                glx::CONTEXT_MAJOR_VERSION_ARB as glx::types::GLint, 3,
-                glx::CONTEXT_MINOR_VERSION_ARB as glx::types::GLint, 2,
-                0, // This has to be the last item
-            ];
-
-            // Reference: https://www.khronos.org/registry/OpenGL/extensions/ARB/GLX_ARB_create_context.txt
-            context = glx::CreateContextAttribsARB(
-                display as *mut glx::types::Display, // dpy
-                best_framebuffer_config,             // config
-                0 as glx::types::GLXContext,         // share_context
-                true as glx::types::Bool,            // direct
-                context_attributes.as_ptr(),         // attrib_list
-            );
-        }
-
-        if context.is_null() {
-            fatal!("Could not create a context!");
-        }
-
         // Flush the output buffer and wait until all request have been received and processed by the X server
         // Reference: https://tronche.com/gui/x/xlib/event-handling/XSync.html
         xlib::XSync(
             display,     // display
             xlib::False, // discard
         );
-
-        // Check if we obtained a direct context
-        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXIsDirect.xml
-        if glx::IsDirect(
-            display as *mut glx::types::Display, // dpy
-            context,                             // ctx
-        ) == false as glx::types::Bool
-        {
-            fatal!("Created context is not a direct context!");
-        }
 
         let mut attributes = {
             let mut attributes_uninit: MaybeUninit<xlib::XSetWindowAttributes> =
@@ -240,32 +190,6 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
             &mut attributes, // attributes
         );
 
-        // Make context the current GLX rendering context of the calling thread and attach the context to the window
-        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXMakeCurrent.xml
-        glx::MakeCurrent(
-            display as *mut glx::types::Display, // dpy
-            window,                              // drawable
-            context,                             // ctx
-        );
-
-        let vendor_cstr = CStr::from_ptr(gl::GetString(gl::VENDOR) as *mut i8);
-        let vendor = vendor_cstr
-            .to_str()
-            .unwrap_or_else(|e| fatal!("Could not create &str! ({})", e));
-        info!("GL vendor: {}", vendor);
-
-        let renderer_cstr = CStr::from_ptr(gl::GetString(gl::RENDERER) as *mut i8);
-        let renderer = renderer_cstr
-            .to_str()
-            .unwrap_or_else(|e| fatal!("Could not create &str! ({})", e));
-        info!("GL renderer: {}", renderer);
-
-        let version_cstr = CStr::from_ptr(gl::GetString(gl::VERSION) as *mut i8);
-        let version = version_cstr
-            .to_str()
-            .unwrap_or_else(|e| fatal!("Could not create &str! ({})", e));
-        info!("GL version: {}", version);
-
         // Create window name
         let window_name =
             CString::new("Koala chess").unwrap_or_else(|_| fatal!("Could not create CString!"));
@@ -278,6 +202,9 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
             display, // display
             window,  // w
         );
+
+        // Initialize OpenGL
+        initialize_open_gl(display, screen_id, best_framebuffer_config, window);
 
         (display, window)
     }
@@ -357,18 +284,114 @@ pub fn r#loop(display: *mut xlib::Display, window: u64, game: &mut Game) {
                 }
             }
 
-            // Draw game
+            // Rendering
             let aspect_ratio_mutex = *ASPECT_RATIO
                 .lock()
                 .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
 
+            // Draw game
             if let Err(e) = game.draw(aspect_ratio_mutex) {
                 error!("{}", e);
             }
 
             glx::SwapBuffers(display as *mut glx::types::Display, window);
+
+            // TODO: Metrics
         }
     }
+}
+
+fn initialize_open_gl(
+    display: *mut xlib::Display,
+    screen_id: i32,
+    framebuffer_config: glx::types::GLXFBConfig,
+    window: glx::types::Window,
+) {
+    let rendering_context;
+
+    let extension_supported = unsafe {
+        is_extension_supported(
+            "GLX_ARB_create_context",
+            display as *mut glx::types::Display,
+            screen_id,
+        )
+    }
+    .unwrap_or(false);
+
+    if !extension_supported {
+        // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXCreateNewContext.xml
+        rendering_context = unsafe {
+            glx::CreateNewContext(
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+                glx::RGBA_TYPE as i32,               // render_type
+                std::ptr::null::<c_void>(),          // share_list
+                true as i32,                         // direct
+            )
+        };
+    } else {
+        #[rustfmt::skip]
+        let context_attributes = vec![
+            glx::CONTEXT_MAJOR_VERSION_ARB as glx::types::GLint, 3,
+            glx::CONTEXT_MINOR_VERSION_ARB as glx::types::GLint, 2,
+            0, // This has to be the last item
+        ];
+
+        // Reference: https://www.khronos.org/registry/OpenGL/extensions/ARB/GLX_ARB_create_context.txt
+        rendering_context = unsafe {
+            glx::CreateContextAttribsARB(
+                display as *mut glx::types::Display, // dpy
+                framebuffer_config,                  // config
+                0 as glx::types::GLXContext,         // share_context
+                true as glx::types::Bool,            // direct
+                context_attributes.as_ptr(),         // attrib_list
+            )
+        };
+    }
+
+    if rendering_context.is_null() {
+        fatal!("Could not create OpenGL rendering context!");
+    }
+
+    // Check if we obtained a direct context
+    // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXIsDirect.xml
+    if unsafe {
+        glx::IsDirect(
+            display as *mut glx::types::Display, // dpy
+            rendering_context,                   // ctx
+        )
+    } == false as glx::types::Bool
+    {
+        fatal!("Created context is not a direct context!");
+    }
+
+    // Make context the current GLX rendering context of the calling thread and attach the context to the window
+    // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXMakeCurrent.xml
+    unsafe {
+        glx::MakeCurrent(
+            display as *mut glx::types::Display, // dpy
+            window,                              // drawable
+            rendering_context,                   // ctx
+        )
+    };
+
+    let vendor_cstr = unsafe { CStr::from_ptr(gl::GetString(gl::VENDOR) as *mut i8) };
+    let vendor = vendor_cstr
+        .to_str()
+        .unwrap_or_else(|e| fatal!("Could not create &str! ({})", e));
+    info!("GL vendor: {}", vendor);
+
+    let renderer_cstr = unsafe { CStr::from_ptr(gl::GetString(gl::RENDERER) as *mut i8) };
+    let renderer = renderer_cstr
+        .to_str()
+        .unwrap_or_else(|e| fatal!("Could not create &str! ({})", e));
+    info!("GL renderer: {}", renderer);
+
+    let version_cstr = unsafe { CStr::from_ptr(gl::GetString(gl::VERSION) as *mut i8) };
+    let version = version_cstr
+        .to_str()
+        .unwrap_or_else(|e| fatal!("Could not create &str! ({})", e));
+    info!("GL version: {}", version);
 }
 
 fn initialize_glx_addresses() {

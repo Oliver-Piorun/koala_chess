@@ -147,19 +147,18 @@ pub fn r#loop(window: HWND, game: &mut Game) {
         }
 
         // Rendering
-        unsafe {
-            let aspect_ratio_mutex = *ASPECT_RATIO
-                .lock()
-                .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
+        let aspect_ratio_mutex = *ASPECT_RATIO
+            .lock()
+            .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
 
-            // Draw game
-            if let Err(e) = game.draw(aspect_ratio_mutex) {
-                error!("{}", e);
-            }
-
-            SwapBuffers(device_context);
+        // Draw game
+        if let Err(e) = game.draw(aspect_ratio_mutex) {
+            error!("{}", e);
         }
 
+        SwapBuffers(device_context);
+
+        // Metrics
         let mut end_performance_counter = LARGE_INTEGER::default();
         unsafe { QueryPerformanceCounter(&mut end_performance_counter) };
 
@@ -195,7 +194,7 @@ fn initialize_open_gl(window: HWND) {
     let rendering_context = unsafe { wglCreateContext(device_context) };
 
     if rendering_context.is_null() {
-        fatal!("Could not create a OpenGL rendering context!");
+        fatal!("Could not create OpenGL rendering context!");
     }
 
     if unsafe {
