@@ -156,7 +156,7 @@ pub fn r#loop(window: HWND, game: &mut Game) {
             error!("{}", e);
         }
 
-        SwapBuffers(device_context);
+        unsafe { SwapBuffers(device_context) };
 
         // Metrics
         let mut end_performance_counter = LARGE_INTEGER::default();
