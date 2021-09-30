@@ -444,16 +444,16 @@ fn initialize_glx_addresses() {
         .unwrap_or_else(|| fatal!("Could not get address! ({})", function_name))
             as *const std::ffi::c_void
     });
-    let _ = glx::QueryVersion::load_with(|function_name| get_address(function_name));
-    let _ = glx::ChooseFBConfig::load_with(|function_name| get_address(function_name));
-    let _ = glx::GetVisualFromFBConfig::load_with(|function_name| get_address(function_name));
-    let _ = glx::GetFBConfigAttrib::load_with(|function_name| get_address(function_name));
-    let _ = glx::QueryExtensionsString::load_with(|function_name| get_address(function_name));
-    let _ = glx::CreateNewContext::load_with(|function_name| get_address(function_name));
-    let _ = glx::CreateContextAttribsARB::load_with(|function_name| get_address(function_name));
-    let _ = glx::IsDirect::load_with(|function_name| get_address(function_name));
-    let _ = glx::MakeCurrent::load_with(|function_name| get_address(function_name));
-    let _ = glx::SwapBuffers::load_with(|function_name| get_address(function_name));
+    let _ = glx::QueryVersion::load_with(get_address);
+    let _ = glx::ChooseFBConfig::load_with(get_address);
+    let _ = glx::GetVisualFromFBConfig::load_with(get_address);
+    let _ = glx::GetFBConfigAttrib::load_with(get_address);
+    let _ = glx::QueryExtensionsString::load_with(get_address);
+    let _ = glx::CreateNewContext::load_with(get_address);
+    let _ = glx::CreateContextAttribsARB::load_with(get_address);
+    let _ = glx::IsDirect::load_with(get_address);
+    let _ = glx::MakeCurrent::load_with(get_address);
+    let _ = glx::SwapBuffers::load_with(get_address);
 }
 
 fn get_address(function_name: &str) -> *const std::ffi::c_void {
