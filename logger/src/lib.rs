@@ -5,11 +5,9 @@ mod log_level;
 
 pub use log_level::LogLevel;
 use std::sync::Mutex;
-use std::time::SystemTime;
 use std::{fs::File, lazy::SyncLazy};
 use std::{fs::OpenOptions, io::Write};
 use time::macros::format_description;
-use time::OffsetDateTime;
 
 #[macro_export]
 macro_rules! trace {
@@ -126,8 +124,7 @@ pub fn log_fatal(file: &str, line: u32, message: String) -> ! {
 }
 
 fn format_message(file: &str, line: u32, log_level: LogLevel, message: String) -> String {
-    let system_time = SystemTime::now();
-    let date_time: OffsetDateTime = system_time.into();
+    let date_time = time::OffsetDateTime::now_local().unwrap();
     let format =
         format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:3]");
     let formatted_date_time = date_time.format(format).unwrap();
