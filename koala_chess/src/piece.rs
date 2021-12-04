@@ -1,6 +1,7 @@
 use crate::{
     bitmap,
     board::Board,
+    input::Input,
     mat4::Mat4,
     shader::Shader,
     transformations::{rotate_z, scale, translate},
@@ -158,7 +159,12 @@ impl Piece {
         }
     }
 
-    pub fn draw(&self, projection: &Mat4, board: &Board) -> Result<(), Box<dyn Error>> {
+    pub fn draw(
+        &self,
+        input: &Input,
+        projection: &Mat4,
+        board: &Board,
+    ) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -222,6 +228,30 @@ impl Piece {
         }
 
         model = scale(model, Vec3::new_xyz(self.width, self.height, 1.0));
+
+        let result = *projection * model;
+
+        let mut mouse_x = input.mouse_x as f32;
+        let mut mouse_y = input.mouse_y as f32;
+        let piece_x = result[0][0] + result[3][0];
+        let piece_y = result[1][1] + result[3][1];
+        if self.board_x == 0 && self.board_y == 0 {
+            //println!("p: {} {}", self.x, self.y);
+            println!("p2: {} {}", piece_x, piece_y);
+            println!("m1: {} {}", mouse_x, mouse_y);
+        }
+
+        // Check if mouse is on piece
+
+        // println!("m1: {} {}", mouse_x, mouse_y);
+
+        if mouse_x >= piece_x
+            && mouse_x <= piece_x + self.width
+            && mouse_y >= piece_y
+            && mouse_y <= piece_y + self.height
+        {
+            println!("yes");
+        }
 
         atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         atlas_shader.set_mat4(

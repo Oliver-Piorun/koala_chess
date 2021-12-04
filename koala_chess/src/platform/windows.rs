@@ -1,4 +1,5 @@
 use crate::game::Game;
+use crate::input::Input;
 use crate::renderer::open_gl;
 use logger::*;
 use std::error::Error;
@@ -10,7 +11,9 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
 };
-use winapi::um::wingdi::wglDeleteContext;
+use winapi::shared::minwindef::DWORD;
+use winapi::um::wingdi::{wglDeleteContext, MAKEPOINTS};
+use winapi::um::winuser::{WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE};
 use winapi::{
     shared::{
         minwindef::{ATOM, HMODULE, LPARAM, LRESULT, PROC, UINT, WORD, WPARAM},
@@ -43,6 +46,7 @@ static OPEN_GL_MODULE: SyncLazy<Mutex<ModuleHandle>> =
     SyncLazy::new(|| Mutex::new(ModuleHandle(std::ptr::null_mut())));
 static INITIALIZED_OPEN_GL: SyncLazy<AtomicBool> = SyncLazy::new(|| AtomicBool::new(false));
 static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
+static INPUT: SyncLazy<Mutex<Input>> = SyncLazy::new(|| Mutex::new(Input::default()));
 
 pub fn create_window() -> HWND {
     // Create window class name
@@ -146,13 +150,18 @@ pub fn r#loop(window: HWND, game: &mut Game) {
             }
         }
 
+        // Input
+        let input = *INPUT
+            .lock()
+            .unwrap_or_else(|e| fatal!("Could not lock input! ({})", e));
+
         // Rendering
         let aspect_ratio = *ASPECT_RATIO
             .lock()
             .unwrap_or_else(|e| fatal!("Could not lock aspect ratio mutex! ({})", e));
 
         // Draw game
-        if let Err(e) = game.draw(aspect_ratio) {
+        if let Err(e) = game.draw(&input, aspect_ratio) {
             error!("{}", e);
         }
 
@@ -173,10 +182,10 @@ pub fn r#loop(window: HWND, game: &mut Game) {
         let frames_per_second = unsafe { *performance_frequency.QuadPart() as f64 }
             / elapsed_performance_counter as f64;
 
-        println!(
-            "frames per second: {} / frame time: {}ms",
-            frames_per_second, elapsed_milliseconds
-        );
+        // println!(
+        //     "frames per second: {} / frame time: {}ms",
+        //     frames_per_second, elapsed_milliseconds
+        // );
 
         last_performance_counter = end_performance_counter;
     }
@@ -323,8 +332,8 @@ fn negotiate_pixel_format(device_context: HDC) {
 
 fn initialize_wgl_addresses() {
     // Get and assign addresses
-    let _ = wgl::CreateContextAttribsARB::load_with(|function_name| get_address(function_name));
-    let _ = wgl::GetExtensionsStringARB::load_with(|function_name| get_address(function_name));
+    let _ = wgl::CreateContextAttribsARB::load_with(get_address);
+    let _ = wgl::GetExtensionsStringARB::load_with(get_address);
 }
 
 fn load_open_gl_module() {
@@ -429,6 +438,34 @@ unsafe extern "system" fn window_proc(
                 // Set viewport
                 gl::Viewport(0, 0, width, height);
             }
+        }
+        WM_LBUTTONDOWN => {
+            info!("WM_LBUTTONDOWN");
+
+            INPUT
+                .lock()
+                .unwrap_or_else(|e| fatal!("Could not lock input mutex! ({})", e))
+                .mouse_left_button_down = true;
+        }
+        WM_LBUTTONUP => {
+            info!("WM_LBUTTONUP");
+
+            INPUT
+                .lock()
+                .unwrap_or_else(|e| fatal!("Could not lock input mutex! ({})", e))
+                .mouse_left_button_down = false;
+        }
+        WM_MOUSEMOVE => {
+            let points = MAKEPOINTS(l_param as DWORD);
+
+            info!("WM_MOVE: x: {} / y: {}", points.x, points.y);
+
+            let mut input_mutex = INPUT
+                .lock()
+                .unwrap_or_else(|e| fatal!("Could not lock input mutex! ({})", e));
+
+            input_mutex.mouse_x = points.x;
+            input_mutex.mouse_y = points.y;
         }
         WM_DESTROY => {
             info!("window_proc: WM_DESTROY");

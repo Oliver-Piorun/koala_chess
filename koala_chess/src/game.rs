@@ -1,8 +1,13 @@
 use crate::{
     board::Board,
+    input::Input,
+    mat4::Mat4,
     piece::{Piece, PieceColor, PieceKind},
     projections::orthogonal_projection,
     shader,
+    transformations::translate,
+    vec3::Vec3,
+    vec4::Vec4,
 };
 use logger::*;
 use std::error::Error;
@@ -148,7 +153,7 @@ impl Game {
         }
     }
 
-    pub fn draw(&mut self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
+    pub fn draw(&mut self, input: &Input, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
             // Set the clear color
             gl::ClearColor(0.17, 0.32, 0.59, 0.0);
@@ -201,7 +206,7 @@ impl Game {
             piece.width = scaled_piece_size;
             piece.height = scaled_piece_size;
 
-            piece.draw(&projection, &self.board)?;
+            piece.draw(&input, &projection, &self.board)?;
         }
 
         Ok(())
