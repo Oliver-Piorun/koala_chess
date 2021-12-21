@@ -342,8 +342,6 @@ fn initialize_open_gl(
     framebuffer_config: glx::types::GLXFBConfig,
     window: glx::types::Window,
 ) {
-    let rendering_context;
-
     let extension_supported = unsafe {
         is_extension_supported(
             "GLX_ARB_create_context",
@@ -353,9 +351,9 @@ fn initialize_open_gl(
     }
     .unwrap_or(false);
 
-    if !extension_supported {
+    let rendering_context = if !extension_supported {
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXCreateNewContext.xml
-        rendering_context = unsafe {
+        unsafe {
             glx::CreateNewContext(
                 display as *mut glx::types::Display, // dpy
                 framebuffer_config,                  // config
@@ -363,7 +361,7 @@ fn initialize_open_gl(
                 std::ptr::null::<c_void>(),          // share_list
                 true as i32,                         // direct
             )
-        };
+        }
     } else {
         #[rustfmt::skip]
         let context_attributes = vec![
@@ -373,7 +371,7 @@ fn initialize_open_gl(
         ];
 
         // Reference: https://www.khronos.org/registry/OpenGL/extensions/ARB/GLX_ARB_create_context.txt
-        rendering_context = unsafe {
+        unsafe {
             glx::CreateContextAttribsARB(
                 display as *mut glx::types::Display, // dpy
                 framebuffer_config,                  // config
@@ -381,8 +379,8 @@ fn initialize_open_gl(
                 true as glx::types::Bool,            // direct
                 context_attributes.as_ptr(),         // attrib_list
             )
-        };
-    }
+        }
+    };
 
     if rendering_context.is_null() {
         fatal!("Could not create OpenGL rendering context!");
