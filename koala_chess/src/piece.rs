@@ -249,6 +249,8 @@ impl Piece {
             }
         }
 
+        // Test
+
 
         atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         atlas_shader.set_mat4(
