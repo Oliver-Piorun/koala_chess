@@ -238,7 +238,10 @@ impl Piece {
         let piece_y = result[1][1] + result[3][1];
 
         if self.board_x == 0 && self.board_y == 0 {
-            println!("mouse xy: {} {} | left white rook xy: {} {}", mouse_x, mouse_y, piece_x, piece_y);
+            println!(
+                "mouse xy: {} {} | left white rook xy: {} {}",
+                mouse_x, mouse_y, piece_x, piece_y
+            );
 
             if mouse_x >= piece_x
                 && mouse_x <= piece_x + self.width
@@ -248,9 +251,6 @@ impl Piece {
                 println!("Mouse is on piece!");
             }
         }
-
-        // Test
-
 
         atlas_shader.set_mat4("model\0", model.data.as_ptr() as *const gl::types::GLfloat)?;
         atlas_shader.set_mat4(
