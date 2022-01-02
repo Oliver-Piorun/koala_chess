@@ -4,11 +4,13 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+    types: [opened, ready_for_review, reopened, synchronize]
   workflow_dispatch:
 env:
   CARGO_TERM_COLOR: always
 jobs:
   windows_build:
+    if: github.event.pull_request.draft == false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
