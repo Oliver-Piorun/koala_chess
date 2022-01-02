@@ -206,7 +206,7 @@ impl Game {
             piece.width = scaled_piece_size;
             piece.height = scaled_piece_size;
 
-            piece.draw(&input, &projection, &self.board)?;
+            piece.draw(input, &projection, &self.board)?;
         }
 
         Ok(())

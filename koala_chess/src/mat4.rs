@@ -28,7 +28,7 @@ impl Mul<Mat4> for Mat4 {
 
     #[rustfmt::skip]
     fn mul(self, rhs: Mat4) -> Self::Output {
-        let mut result = self.clone();
+        let mut result = self;
         result[0][0] = self[0][0] * rhs[0][0] + self[0][1] * rhs[1][0] + self[0][2] * rhs[2][0] + self[0][3] * rhs[3][0];
         result[0][1] = self[0][0] * rhs[0][1] + self[0][1] * rhs[1][1] + self[0][2] * rhs[2][1] + self[0][3] * rhs[3][1];
         result[0][2] = self[0][0] * rhs[0][2] + self[0][1] * rhs[1][2] + self[0][2] * rhs[2][2] + self[0][3] * rhs[3][2];
