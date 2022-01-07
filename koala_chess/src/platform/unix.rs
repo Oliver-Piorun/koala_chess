@@ -485,8 +485,8 @@ unsafe fn is_extension_supported(
         screen,                              // screen
     );
 
-    let query_extensions_string_cstring = CString::from_raw(query_extensions_string_raw as *mut i8);
-    let query_extensions_string_str = query_extensions_string_cstring.to_str()?;
+    let query_extensions_string_cstr = CStr::from_ptr(query_extensions_string_raw as *mut i8);
+    let query_extensions_string_str = query_extensions_string_cstr.to_str()?;
 
     Ok(query_extensions_string_str.contains(extension))
 }
