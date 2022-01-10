@@ -23,6 +23,20 @@ impl IndexMut<usize> for Mat4 {
     }
 }
 
+impl Mul<Vec4> for Mat4 {
+    type Output = Vec4;
+
+    fn mul(self, rhs: Vec4) -> Self::Output {
+        let mut result = Vec4::default();
+        result[0] = self[0][0] * rhs[0] + self[0][1] * rhs[1] + self[0][2] * rhs[2];
+        result[1] = self[1][0] * rhs[0] + self[1][1] * rhs[1] + self[1][2] * rhs[2];
+        result[2] = self[2][0] * rhs[0] + self[2][1] * rhs[1] + self[2][2] * rhs[2];
+        result[3] = self[3][0] * rhs[0] + self[3][1] * rhs[1] + self[3][2] * rhs[2];
+
+        result
+    }
+}
+
 impl Mul<Mat4> for Mat4 {
     type Output = Mat4;
 
