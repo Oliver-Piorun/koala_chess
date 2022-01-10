@@ -3,7 +3,7 @@ use crate::input::Input;
 use crate::renderer::open_gl;
 use logger::*;
 use std::error::Error;
-use std::ffi::{CString, OsStr};
+use std::ffi::{CStr, CString, OsStr};
 use std::io;
 use std::lazy::SyncLazy;
 use std::os::windows::ffi::OsStrExt;
@@ -396,8 +396,8 @@ fn get_address(function_name: &str) -> *const std::ffi::c_void {
 unsafe fn is_extension_supported(extension: &str, hdc: HDC) -> Result<bool, Box<dyn Error>> {
     let extensions_string_raw = wgl::GetExtensionsStringARB(hdc as *const std::ffi::c_void);
 
-    let extensions_string_cstring = CString::from_raw(extensions_string_raw as *mut i8);
-    let extensions_string_str = extensions_string_cstring.to_str()?;
+    let extensions_string_cstr = CStr::from_ptr(extensions_string_raw as *mut i8);
+    let extensions_string_str = extensions_string_cstr.to_str()?;
 
     Ok(extensions_string_str.contains(extension))
 }
