@@ -11,6 +11,9 @@ out vec2 texture_coordinate;
 
 void main()
 {
+    // Vclip = Mprojection * Mview * Mmodel * Vlocal
+    // Mview is not specified which means that the camera is positioned at the origin and looking torwards -Z
+    // Vlocal is not specified which means that the object is positioned at its origin
     gl_Position = projection * model * vec4(
         in_position.x,
         // OpenGL expects 0.0 to be at the bottom, but 0.0 is at the top for the texture
