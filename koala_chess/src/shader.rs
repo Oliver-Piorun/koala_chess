@@ -1,7 +1,7 @@
 use logger::*;
 use std::{error::Error, fs::read_to_string};
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy)]
 pub struct Shader {
     program: gl::types::GLuint,
 }

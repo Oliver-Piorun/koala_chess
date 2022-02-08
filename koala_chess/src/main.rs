@@ -4,6 +4,7 @@
 mod bitmap;
 mod board;
 mod game;
+mod input;
 mod mat4;
 mod piece;
 mod platform;
