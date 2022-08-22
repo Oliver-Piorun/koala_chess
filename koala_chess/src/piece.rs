@@ -12,7 +12,7 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum PieceColor {
     White,
     Black,

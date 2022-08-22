@@ -1,4 +1,4 @@
-#[derive(PartialEq, PartialOrd, Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Copy, Clone, Debug)]
 pub enum LogLevel {
     Trace,
     Debug,

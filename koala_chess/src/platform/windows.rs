@@ -323,8 +323,8 @@ fn negotiate_pixel_format(device_context: HDC) {
 
 fn initialize_wgl_addresses() {
     // Get and assign addresses
-    let _ = wgl::CreateContextAttribsARB::load_with(get_address);
-    let _ = wgl::GetExtensionsStringARB::load_with(get_address);
+    wgl::CreateContextAttribsARB::load_with(get_address);
+    wgl::GetExtensionsStringARB::load_with(get_address);
 }
 
 fn load_open_gl_module() {
