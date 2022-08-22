@@ -1,11 +1,11 @@
-// For SyncLazy
+// For LazyLock
 #![feature(once_cell)]
 
 mod log_level;
 
 pub use log_level::LogLevel;
 use std::sync::Mutex;
-use std::{fs::File, lazy::SyncLazy};
+use std::{fs::File, sync::LazyLock};
 use std::{fs::OpenOptions, io::Write};
 use time::macros::format_description;
 use time::OffsetDateTime;
@@ -84,8 +84,8 @@ macro_rules! log_fatal {
     };
 }
 
-pub static LOG_LEVEL: SyncLazy<Mutex<LogLevel>> = SyncLazy::new(|| Mutex::new(LogLevel::Trace));
-static FILE: SyncLazy<Mutex<File>> = SyncLazy::new(|| {
+pub static LOG_LEVEL: LazyLock<Mutex<LogLevel>> = LazyLock::new(|| Mutex::new(LogLevel::Trace));
+static FILE: LazyLock<Mutex<File>> = LazyLock::new(|| {
     Mutex::new(
         OpenOptions::new()
             .create(true)

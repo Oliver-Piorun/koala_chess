@@ -1,7 +1,7 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
 use logger::*;
-use std::lazy::SyncLazy;
+use std::lazy::LazyLock;
 use std::os::raw::{c_int, c_uint};
 use std::sync::Mutex;
 use std::{error::Error, mem::MaybeUninit};
@@ -11,7 +11,7 @@ use std::{
 };
 use x11::xlib;
 
-static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
+static ASPECT_RATIO: LazyLock<Mutex<f32>> = LazyLock::new(|| Mutex::new(1.0));
 
 pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
     initialize_glx_addresses();

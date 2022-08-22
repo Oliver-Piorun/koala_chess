@@ -1,4 +1,4 @@
-// For SyncLazy
+// For LazyLock
 #![feature(once_cell)]
 
 mod bitmap;

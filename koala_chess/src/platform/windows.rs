@@ -4,8 +4,8 @@ use logger::*;
 use std::error::Error;
 use std::ffi::{CStr, CString, OsStr};
 use std::io;
-use std::lazy::SyncLazy;
 use std::os::windows::ffi::OsStrExt;
+use std::sync::LazyLock;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
@@ -39,10 +39,10 @@ struct ModuleHandle(HMODULE);
 // Implement Send for the HMODULE wrapper, because HMODULE does not implement it
 unsafe impl Send for ModuleHandle {}
 
-static OPEN_GL_MODULE: SyncLazy<Mutex<ModuleHandle>> =
-    SyncLazy::new(|| Mutex::new(ModuleHandle(std::ptr::null_mut())));
-static INITIALIZED_OPEN_GL: SyncLazy<AtomicBool> = SyncLazy::new(|| AtomicBool::new(false));
-static ASPECT_RATIO: SyncLazy<Mutex<f32>> = SyncLazy::new(|| Mutex::new(1.0));
+static OPEN_GL_MODULE: LazyLock<Mutex<ModuleHandle>> =
+    LazyLock::new(|| Mutex::new(ModuleHandle(std::ptr::null_mut())));
+static INITIALIZED_OPEN_GL: LazyLock<AtomicBool> = LazyLock::new(|| AtomicBool::new(false));
+static ASPECT_RATIO: LazyLock<Mutex<f32>> = LazyLock::new(|| Mutex::new(1.0));
 
 pub fn create_window() -> HWND {
     // Create window class name

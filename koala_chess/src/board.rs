@@ -7,9 +7,12 @@ use crate::{
     vec3::Vec3,
 };
 use logger::*;
-use std::{error::Error, lazy::SyncLazy, sync::Mutex};
+use std::{
+    error::Error,
+    sync::{LazyLock, Mutex},
+};
 
-static SHADER: SyncLazy<Mutex<Option<Shader>>> = SyncLazy::new(|| Mutex::new(None));
+static SHADER: LazyLock<Mutex<Option<Shader>>> = LazyLock::new(|| Mutex::new(None));
 static mut VERTEX_BUFFER_OBJECT: gl::types::GLuint = 0;
 static mut TEXTURE: gl::types::GLuint = 0;
 
