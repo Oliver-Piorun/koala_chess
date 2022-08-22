@@ -1,9 +1,8 @@
 use crate::game::Game;
 use crate::renderer::open_gl;
 use logger::*;
-use std::lazy::LazyLock;
 use std::os::raw::{c_int, c_uint};
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 use std::{error::Error, mem::MaybeUninit};
 use std::{
     ffi::{c_void, CStr, CString},
@@ -429,7 +428,7 @@ fn initialize_open_gl(
 
 fn initialize_glx_addresses() {
     // Get and assign addresses
-    let _ = glx::GetProcAddress::load_with(|function_name| unsafe {
+    glx::GetProcAddress::load_with(|function_name| unsafe {
         // Create null-terminated function name
         let null_terminated_function_name = CString::new(function_name)
             .unwrap_or_else(|_| fatal!("Could not create CString! ({})", function_name));
@@ -442,16 +441,16 @@ fn initialize_glx_addresses() {
         .unwrap_or_else(|| fatal!("Could not get address! ({})", function_name))
             as *const std::ffi::c_void
     });
-    let _ = glx::QueryVersion::load_with(get_address);
-    let _ = glx::ChooseFBConfig::load_with(get_address);
-    let _ = glx::GetVisualFromFBConfig::load_with(get_address);
-    let _ = glx::GetFBConfigAttrib::load_with(get_address);
-    let _ = glx::QueryExtensionsString::load_with(get_address);
-    let _ = glx::CreateNewContext::load_with(get_address);
-    let _ = glx::CreateContextAttribsARB::load_with(get_address);
-    let _ = glx::IsDirect::load_with(get_address);
-    let _ = glx::MakeCurrent::load_with(get_address);
-    let _ = glx::SwapBuffers::load_with(get_address);
+    glx::QueryVersion::load_with(get_address);
+    glx::ChooseFBConfig::load_with(get_address);
+    glx::GetVisualFromFBConfig::load_with(get_address);
+    glx::GetFBConfigAttrib::load_with(get_address);
+    glx::QueryExtensionsString::load_with(get_address);
+    glx::CreateNewContext::load_with(get_address);
+    glx::CreateContextAttribsARB::load_with(get_address);
+    glx::IsDirect::load_with(get_address);
+    glx::MakeCurrent::load_with(get_address);
+    glx::SwapBuffers::load_with(get_address);
 }
 
 fn get_address(function_name: &str) -> *const std::ffi::c_void {
