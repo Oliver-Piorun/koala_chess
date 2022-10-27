@@ -25,7 +25,7 @@
 
 #
 
-**Attention:** This game is currently heavily in development :construction:
+**Attention:** This game is currently in development :construction:
 
 Feel free to build it from source until a playable version is being released! :blush:
 
