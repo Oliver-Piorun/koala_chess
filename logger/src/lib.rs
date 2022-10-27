@@ -109,9 +109,9 @@ pub fn log(file: &str, line: u32, log_level: LogLevel, message: String) {
 
     if log_level >= *global_log_level {
         if log_level != LogLevel::Error {
-            println!("{}", formatted_message);
+            println!("{formatted_message}");
         } else {
-            eprintln!("{}", formatted_message);
+            eprintln!("{formatted_message}");
         }
     }
 }
@@ -139,6 +139,6 @@ fn format_message(file: &str, line: u32, log_level: LogLevel, message: String) -
 fn log_to_file(full_message: &str) {
     FILE.lock()
         .unwrap()
-        .write_fmt(format_args!("{}\n", full_message))
+        .write_fmt(format_args!("{full_message}\n"))
         .unwrap();
 }

@@ -3,9 +3,9 @@ use std::{env, fs::File, path::Path};
 
 fn main() {
     let destination = env::var("OUT_DIR")
-        .unwrap_or_else(|e| panic!("Could not get \"OUT_DIR\" environment variable! ({})", e));
-    let mut file = File::create(&Path::new(&destination).join("bindings.rs"))
-        .unwrap_or_else(|e| panic!("Could not create bindings.rs file! ({})", e));
+        .unwrap_or_else(|e| panic!("Could not get \"OUT_DIR\" environment variable! ({e})"));
+    let mut file = File::create(Path::new(&destination).join("bindings.rs"))
+        .unwrap_or_else(|e| panic!("Could not create bindings.rs file! ({e})"));
 
     Registry::new(
         Api::Gles2,
@@ -17,5 +17,5 @@ fn main() {
         ],
     )
     .write_bindings(GlobalGenerator, &mut file)
-    .unwrap_or_else(|e| panic!("Could not create bindings! ({})", e));
+    .unwrap_or_else(|e| panic!("Could not create bindings! ({e})"));
 }

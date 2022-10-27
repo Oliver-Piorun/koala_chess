@@ -100,7 +100,7 @@ impl Shader {
         };
 
         if uniform_location == -1 {
-            return Err(format!("Could not get uniform location! (name: {})", name).into());
+            return Err(format!("Could not get uniform location! (name: {name})").into());
         }
 
         unsafe {
@@ -139,9 +139,9 @@ fn check_for_shader_errors(
 
         match log_cstr.to_str() {
             Ok(log_str) => {
-                return Err(format!("Shader compile error: {}! ({})", log_str, shader_path).into())
+                return Err(format!("Shader compile error: {log_str}! ({shader_path})").into())
             }
-            Err(e) => return Err(format!("Could not create a CStr from a pointer! ({})", e).into()),
+            Err(e) => return Err(format!("Could not create a CStr from a pointer! ({e})").into()),
         }
     }
 
@@ -172,8 +172,8 @@ fn check_for_program_errors(program: gl::types::GLuint) -> Result<(), Box<dyn Er
         let log_cstr = unsafe { std::ffi::CStr::from_ptr(log.as_ptr()) };
 
         match log_cstr.to_str() {
-            Ok(log_str) => return Err(format!("Shader program link error: {}!", log_str).into()),
-            Err(e) => return Err(format!("Could not create a CStr from a pointer! ({})", e).into()),
+            Ok(log_str) => return Err(format!("Shader program link error: {log_str}!").into()),
+            Err(e) => return Err(format!("Could not create a CStr from a pointer! ({e})").into()),
         }
     }
 
