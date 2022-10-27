@@ -11,7 +11,7 @@ jobs:
   windows_build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -29,7 +29,7 @@ jobs:
           cp textures/board.bmp target/release/textures
           cp textures/pieces.bmp target/release/textures
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: koala_chess_windows
           path: |
@@ -39,9 +39,9 @@ jobs:
   linux_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install OpenGL libraries
-        run: | 
+        run: |
           sudo apt-get update
           sudo apt-get install freeglut3-dev
       - name: Install latest nightly
@@ -60,7 +60,7 @@ jobs:
           cp --parents textures/board.bmp target/release
           cp --parents textures/pieces.bmp target/release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: koala_chess_linux
           path: |
