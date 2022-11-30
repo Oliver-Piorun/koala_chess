@@ -17,4 +17,4 @@ winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "profileapi
 [target.'cfg(unix)'.dependencies]
 glx = { path = "../glx" }
 libc = { version = "0.2.137" }
-x11 = { version = "2.20.0", features = ["xlib"] }
+x11 = { version = "2.20.1", features = ["xlib"] }
