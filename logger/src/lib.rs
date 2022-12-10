@@ -130,10 +130,7 @@ fn format_message(file: &str, line: u32, log_level: LogLevel, message: String) -
         format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:3]");
     let formatted_date_time = date_time.format(format).unwrap();
 
-    format!(
-        "[{}] [{}:{}] [{:?}] {}",
-        formatted_date_time, file, line, log_level, message
-    )
+    format!("[{formatted_date_time}] [{file}:{line}] [{log_level:?}] {message}",)
 }
 
 fn log_to_file(full_message: &str) {

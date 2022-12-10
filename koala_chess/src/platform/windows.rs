@@ -173,10 +173,7 @@ pub fn r#loop(window: HWND, game: &mut Game) {
         let frames_per_second = unsafe { *performance_frequency.QuadPart() as f64 }
             / elapsed_performance_counter as f64;
 
-        println!(
-            "frames per second: {} / frame time: {}ms",
-            frames_per_second, elapsed_milliseconds
-        );
+        println!("frames per second: {frames_per_second} / frame time: {elapsed_milliseconds}ms");
 
         last_performance_counter = end_performance_counter;
     }

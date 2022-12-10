@@ -76,11 +76,9 @@ impl Shader {
         };
 
         if uniform_location == -1 {
-            return Err(format!(
-                "Could not get uniform location! (name: {}, value: {})",
-                name, value
-            )
-            .into());
+            return Err(
+                format!("Could not get uniform location! (name: {name}, value: {value})",).into(),
+            );
         }
 
         unsafe {
