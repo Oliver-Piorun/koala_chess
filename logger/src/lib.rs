@@ -1,6 +1,4 @@
-// For LazyLock
-#![feature(once_cell)]
-
+#![feature(lazy_cell)]
 mod log_level;
 
 pub use log_level::LogLevel;

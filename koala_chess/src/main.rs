@@ -1,5 +1,4 @@
-// For LazyLock
-#![feature(once_cell)]
+#![feature(lazy_cell)]
 
 mod bitmap;
 mod board;
