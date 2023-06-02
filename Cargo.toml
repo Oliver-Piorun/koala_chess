@@ -5,6 +5,7 @@ members = [
     "koala_chess",
     "logger"
 ]
+resolver = "2"
 
 [profile.release]
 lto = true
