@@ -27,9 +27,7 @@
 
 **Attention:** This game is currently not in development :construction:
 
-Maybe it will turn into a "Rust 2D Rendering Proof-of-Concept (PoC)", as my interests have shifted a bit in the last months and the implemented technical part was the most exciting. We will see!
-
-Anyway, feel free to build it from source until release versions are being published! :blush:
+Maybe it will turn into a "Rust 2D Rendering Proof of Concept (PoC)", as my interests have shifted a bit in the last months and the implemented technical part was the most exciting. We will see!
 
 ## :desktop_computer: Supported platforms
 
