@@ -29,6 +29,8 @@
 
 Maybe it will turn into a "Rust 2D Rendering Proof of Concept (PoC)", as my interests have shifted a bit in the last months and the implemented technical part was the most exciting. We will see!
 
+Feel free to try out the published release(s) :blush:
+
 ## :desktop_computer: Supported platforms
 
 - Windows (OpenGL ES 3.2)
