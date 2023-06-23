@@ -25,17 +25,21 @@
 
 #
 
-**Attention:** This game is currently in development :construction:
+**Attention:** This game is currently not in development :construction:
 
-Feel free to build it from source until a playable version is being released! :blush:
+Maybe it will turn into a "Rust 2D Rendering Proof-of-Concept (PoC)", as my interests have shifted a bit in the last months and the implemented technical part was the most exciting. We will see!
+
+Anyway, feel free to build it from source until release versions are published! :blush:
 
 ## :desktop_computer: Supported platforms
+
 - Windows (OpenGL ES 3.2)
 - Linux/X11 (OpenGL ES 3.2)
 
 ## :zap: Getting started
 
 ### Step by step
+
 - Get [Rust](https://www.rust-lang.org/tools/install) (nightly)
 - Clone the repository
 - Navigate to the cloned repository
@@ -44,17 +48,21 @@ Feel free to build it from source until a playable version is being released! :b
 ## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
 
 ## :wrench: Technical goals
+
 - Use as few dependencies as possible
 - Keep an eye on performance
 
 ## :bulb: Personal goals
+
 - Learn more about Rust, rendering and game development
 
 ### Used development tools
+
 - [Visual Studio Code (website)](https://code.visualstudio.com)
 - [Paint.NET (website)](https://www.getpaint.net)
 
 ### Inspired by
+
 - [Handmade Hero (website)](https://handmadehero.org)
 - [Casey Muratori (twitter)](https://twitter.com/cmuratori)
 - [Jonathan Blow (twitter)](https://twitter.com/jonathan_blow)
