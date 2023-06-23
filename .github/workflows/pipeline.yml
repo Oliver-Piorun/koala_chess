@@ -13,11 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          components: clippy
+        run: |
+          rustup toolchain install nightly --profile minimal --component clippy
+          rustup default nightly
       - name: Check (clippy)
         run: cargo clippy
       - name: Build
@@ -45,11 +43,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install freeglut3-dev
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          components: clippy
+        run: |
+          rustup toolchain install nightly --profile minimal --component clippy
+          rustup default nightly
       - name: Check (clippy)
         run: cargo clippy
       - name: Build
