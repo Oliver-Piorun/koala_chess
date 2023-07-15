@@ -216,7 +216,7 @@ fn initialize_open_gl(window: HWND) {
 
     if extension_supported {
         #[rustfmt::skip]
-        let context_attributes = vec![
+        let context_attributes = [
             wgl::CONTEXT_MAJOR_VERSION_ARB as wgl::types::GLint, 3,
             wgl::CONTEXT_MINOR_VERSION_ARB as wgl::types::GLint, 2,
             0, // This has to be the last item
