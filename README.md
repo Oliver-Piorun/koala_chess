@@ -1,5 +1,7 @@
 <h1 align="center">Koala Chess</h1>
 <p align="center">
+  <img src="./assets/koala_chess.png" width="500" height="500" />
+  <br>
   <i>A handcrafted 2D chess game written in <a href="https://www.rust-lang.org">Rust</a>.</i>
 </p>
 
