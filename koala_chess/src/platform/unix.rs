@@ -191,7 +191,7 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
 
         // Create window name
         let window_name =
-            CString::new("Koala chess").unwrap_or_else(|_| fatal!("Could not create CString!"));
+            CString::new("Koala Chess").unwrap_or_else(|_| fatal!("Could not create CString!"));
 
         // Set window name
         xlib::XStoreName(display, window, window_name.as_ptr());

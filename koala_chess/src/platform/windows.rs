@@ -78,7 +78,7 @@ pub fn create_window() -> HWND {
     }
 
     // Create window name
-    let mut window_name = OsStr::new("Koala chess\0")
+    let mut window_name = OsStr::new("Koala Chess\0")
         .encode_wide()
         .collect::<Vec<u16>>();
     window_name.push(0);
