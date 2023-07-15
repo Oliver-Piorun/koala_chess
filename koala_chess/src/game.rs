@@ -150,8 +150,13 @@ impl Game {
 
     pub fn draw(&mut self, aspect_ratio: f32) -> Result<(), Box<dyn Error>> {
         unsafe {
-            // Set the clear color
-            gl::ClearColor(0.17, 0.32, 0.59, 0.0);
+            // Set the clear color (#1f9b86)
+            gl::ClearColor(
+                0x1f as gl::types::GLfloat / 255.0,
+                0x9b as gl::types::GLfloat / 255.0,
+                0x86 as gl::types::GLfloat / 255.0,
+                0.0,
+            );
 
             // Clear the viewport with the clear color
             gl::Clear(gl::COLOR_BUFFER_BIT);
