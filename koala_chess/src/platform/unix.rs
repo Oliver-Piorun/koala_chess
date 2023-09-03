@@ -53,7 +53,7 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
         );
 
         #[rustfmt::skip]
-        let framebuffer_attributes = vec![
+        let framebuffer_attributes = [
             /* 0x0005 */ glx::DOUBLEBUFFER as glx::types::GLint,  true as glx::types::GLint,
             /* 0x0008 */ glx::RED_SIZE as glx::types::GLint,      8,
             /* 0x0009 */ glx::GREEN_SIZE as glx::types::GLint,    8,
@@ -73,10 +73,10 @@ pub fn create_window() -> (*mut xlib::Display, glx::types::Window) {
         // Get framebuffer configs which match the specified attributes
         // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXChooseFBConfig.xml
         let framebuffer_configs: *mut glx::types::GLXFBConfig = glx::ChooseFBConfig(
-            display as *mut glx::types::Display, // dpy
-            screen_id,                           // screen
-            framebuffer_attributes.as_ptr(),     // attrib_list
-            &mut framebuffer_count,              // nelements
+            display as *mut glx::types::Display,     // dpy
+            screen_id,                               // screen
+            &framebuffer_attributes as *const c_int, // attrib_list
+            &mut framebuffer_count,                  // nelements
         );
 
         if framebuffer_count == 0 {
@@ -363,7 +363,7 @@ fn initialize_open_gl(
         }
     } else {
         #[rustfmt::skip]
-        let context_attributes = vec![
+        let context_attributes = [
             glx::CONTEXT_MAJOR_VERSION_ARB as glx::types::GLint, 3,
             glx::CONTEXT_MINOR_VERSION_ARB as glx::types::GLint, 2,
             0, // This has to be the last item
@@ -376,7 +376,7 @@ fn initialize_open_gl(
                 framebuffer_config,                  // config
                 0 as glx::types::GLXContext,         // share_context
                 true as glx::types::Bool,            // direct
-                context_attributes.as_ptr(),         // attrib_list
+                &context_attributes as *const c_int, // attrib_list
             )
         }
     };
@@ -480,8 +480,8 @@ unsafe fn is_extension_supported(
 ) -> Result<bool, Box<dyn Error>> {
     // Reference: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXQueryExtensionsString.xml
     let query_extensions_string_raw = glx::QueryExtensionsString(
-        display as *mut glx::types::Display, // dpy
-        screen,                              // screen
+        display, // dpy
+        screen,  // screen
     );
 
     let query_extensions_string_cstr = CStr::from_ptr(query_extensions_string_raw as *mut i8);
