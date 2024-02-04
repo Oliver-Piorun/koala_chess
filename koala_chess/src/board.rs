@@ -49,7 +49,7 @@ impl Board {
 
         unsafe {
             // Generate vertex buffer object
-            gl::GenBuffers(1, &mut VERTEX_BUFFER_OBJECT);
+            gl::GenBuffers(1, std::ptr::addr_of_mut!(VERTEX_BUFFER_OBJECT));
 
             // Bind vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, VERTEX_BUFFER_OBJECT);
@@ -67,7 +67,7 @@ impl Board {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
             // Generate texture
-            gl::GenTextures(1, &mut TEXTURE);
+            gl::GenTextures(1, std::ptr::addr_of_mut!(TEXTURE));
 
             // Bind texture
             gl::BindTexture(gl::TEXTURE_2D, TEXTURE);
