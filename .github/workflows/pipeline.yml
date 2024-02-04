@@ -11,7 +11,7 @@ jobs:
   windows_build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install latest nightly
         run: |
           rustup toolchain install nightly --profile minimal --component clippy --no-self-update
@@ -27,7 +27,7 @@ jobs:
           cp textures/board.bmp target/release/textures
           cp textures/pieces.bmp target/release/textures
       - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: koala_chess_windows
           path: |
@@ -37,7 +37,7 @@ jobs:
   linux_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install OpenGL libraries
         run: |
           sudo apt-get update
@@ -56,7 +56,7 @@ jobs:
           cp --parents textures/board.bmp target/release
           cp --parents textures/pieces.bmp target/release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: koala_chess_linux
           path: |
