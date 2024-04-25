@@ -6,7 +6,9 @@ use std::{
 
 #[derive(Default)]
 pub struct Bitmap {
+    #[allow(dead_code)]
     pub file_header: FileHeader,
+    #[allow(dead_code)]
     pub information_header: InformationHeader,
     pub data: Vec<u8>,
 }
@@ -26,6 +28,7 @@ impl Bitmap {
 }
 
 #[derive(Default)]
+#[allow(dead_code)]
 pub struct FileHeader {
     pub r#type: u16,
     pub size: u32,
@@ -47,6 +50,7 @@ impl FileHeader {
 }
 
 #[derive(Default)]
+#[allow(dead_code)]
 pub struct InformationHeader {
     pub size: u32,
     pub width: i32,

@@ -36,8 +36,11 @@ pub struct Piece {
     pub y: f32,
     pub width: f32,
     pub height: f32,
+    #[allow(dead_code)]
     pub rotation: f32,
+    #[allow(dead_code)]
     pub color: PieceColor,
+    #[allow(dead_code)]
     pub kind: PieceKind,
     pub board_x: u8,
     pub board_y: u8,
