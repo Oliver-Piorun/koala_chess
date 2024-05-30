@@ -10,7 +10,7 @@
   ·
   <a href="#zap-getting-started">Getting started</a>
   ·
-  <a href="https://github.com/Oliver-Piorun/koala_chess/projects/1">Development plan</a>
+  <a href="https://github.com/Oliver-Piorun/koala_chess/projects/2">Development plan</a>
 </p>
 
 <p align="center">
@@ -47,7 +47,7 @@ Feel free to try out the published release(s) :blush:
 - Navigate to the cloned repository
 - Run `cargo run --release`
 
-## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/1)
+## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/2)
 
 ## :wrench: Technical goals
 
@@ -66,5 +66,5 @@ Feel free to try out the published release(s) :blush:
 ### Inspired by
 
 - [Handmade Hero (website)](https://handmadehero.org)
-- [Casey Muratori (twitter)](https://twitter.com/cmuratori)
-- [Jonathan Blow (twitter)](https://twitter.com/jonathan_blow)
+- [Casey Muratori (twitter)](https://x.com/cmuratori)
+- [Jonathan Blow (twitter)](https://x.com/jonathan_blow)
