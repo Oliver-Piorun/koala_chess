@@ -10,7 +10,7 @@
   ·
   <a href="#zap-getting-started">Getting started</a>
   ·
-  <a href="https://github.com/Oliver-Piorun/koala_chess/projects/2">Development plan</a>
+  <a href="https://github.com/Oliver-Piorun/projects/2">Development plan</a>
 </p>
 
 <p align="center">
@@ -47,7 +47,7 @@ Feel free to try out the published release(s) :blush:
 - Navigate to the cloned repository
 - Run `cargo run --release`
 
-## :memo: [Development plan](https://github.com/Oliver-Piorun/koala_chess/projects/2)
+## :memo: [Development plan](https://github.com/Oliver-Piorun/projects/2)
 
 ## :wrench: Technical goals
 
