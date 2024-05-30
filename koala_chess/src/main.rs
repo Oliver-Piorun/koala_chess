@@ -1,5 +1,3 @@
-#![feature(lazy_cell)]
-
 mod bitmap;
 mod board;
 mod game;
