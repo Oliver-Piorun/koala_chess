@@ -2,7 +2,7 @@
 <p align="center">
   <img src="./assets/koala_chess.png" width="500" />
   <br>
-  <i>A handcrafted 2D chess game written in <a href="https://www.rust-lang.org">Rust</a>.</i>
+  <i>A handcrafted 2D chess game rendering Proof of Concept (PoC) written in <a href="https://www.rust-lang.org">Rust</a>.</i>
 </p>
 
 <p align="center">
@@ -27,9 +27,7 @@
 
 #
 
-**Attention:** This game is currently not in development :construction:
-
-Maybe it will turn into a "Rust 2D Rendering Proof of Concept (PoC)", as my interests have shifted a bit in the last months and the implemented technical part was the most exciting. We will see!
+**Attention:** This is not a fully-fledged game, but rather a Proof of Concept (PoC), as the technical implementation was the most exciting part.
 
 Feel free to try out the published release(s) :blush:
 
